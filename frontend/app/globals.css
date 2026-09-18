@@ -1,0 +1,63 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body {
+  padding: 0;
+  margin: 0;
+  background: #0a0e14;
+  color: #e6edf5;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.card {
+  @apply rounded-xl border border-border bg-panel p-5;
+}
+
+.kpi {
+  @apply rounded-xl border border-border bg-panel p-5 flex flex-col gap-1;
+}
+
+.th {
+  @apply px-3 py-2 text-left text-xs uppercase tracking-wide text-muted font-medium;
+}
+
+.td {
+  @apply px-3 py-2 text-sm border-t border-border;
+}
+
+.badge {
+  @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium;
+}
+
+.btn {
+  @apply inline-flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors disabled:opacity-50;
+}
+
+.btn-primary {
+  @apply btn bg-accent text-white hover:bg-accent/90;
+}
+
+.btn-ghost {
+  @apply btn border border-border bg-transparent text-muted hover:text-white hover:bg-panel2;
+}
+
+.input {
+  @apply w-full rounded-lg border border-border bg-panel2 px-3 py-2 text-sm text-white outline-none focus:border-accent;
+}
+
+.sidebar-link {
+  @apply flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-muted hover:text-white hover:bg-panel2 transition-colors;
+}
+
+.sidebar-link-active {
+  @apply text-white bg-panel2;
+}

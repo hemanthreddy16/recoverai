@@ -1,0 +1,203 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { ShieldCheck } from "lucide-react";
+import { api, setToken, ApiError } from "@/lib/api";
+
+type Mode = "login" | "register";
+
+export default function LoginPage() {
+  const router = useRouter();
+  const [mode, setMode] = useState<Mode>("login");
+
+  // Login fields
+  const [email, setEmail] = useState("demo@recoverai.dev");
+  const [password, setPassword] = useState("recoverai123");
+
+  // Register fields
+  const [regName, setRegName] = useState("");
+  const [regMerchant, setRegMerchant] = useState("");
+  const [regEmail, setRegEmail] = useState("");
+  const [regPassword, setRegPassword] = useState("");
+  const [regConfirm, setRegConfirm] = useState("");
+
+  const [err, setErr] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  async function handleLogin(e: React.FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    setErr(null);
+    try {
+      const r = await api.post<{ access_token: string }>("/auth/login", { email, password });
+      setToken(r.access_token);
+      router.replace("/dashboard");
+    } catch (e) {
+      setErr(e instanceof ApiError ? "Invalid credentials" : String((e as Error).message));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleRegister(e: React.FormEvent) {
+    e.preventDefault();
+    setErr(null);
+    if (regPassword !== regConfirm) {
+      setErr("Passwords do not match");
+      return;
+    }
+    if (regPassword.length < 8) {
+      setErr("Password must be at least 8 characters");
+      return;
+    }
+    setBusy(true);
+    try {
+      const r = await api.post<{ access_token: string }>("/auth/register", {
+        email: regEmail,
+        password: regPassword,
+        full_name: regName,
+        merchant_name: regMerchant || regName + "'s Store",
+        role: "admin",
+      });
+      setToken(r.access_token);
+      router.replace("/dashboard");
+    } catch (e) {
+      setErr(e instanceof ApiError ? "Registration failed — email may already be in use" : String((e as Error).message));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="flex h-screen items-center justify-center px-4">
+      <div className="w-full max-w-sm">
+        {/* Logo */}
+        <div className="flex items-center gap-2 justify-center mb-6">
+          <ShieldCheck className="h-6 w-6 text-accent2" />
+          <span className="text-xl font-semibold tracking-tight">RECOVERAI</span>
+        </div>
+
+        {/* Tab toggle */}
+        <div className="flex rounded-lg overflow-hidden mb-4 border border-white/10">
+          <button
+            onClick={() => { setMode("login"); setErr(null); }}
+            className={`flex-1 py-2 text-sm font-medium transition-colors ${
+              mode === "login" ? "bg-accent text-white" : "bg-transparent text-muted hover:text-white"
+            }`}
+          >
+            Sign In
+          </button>
+          <button
+            onClick={() => { setMode("register"); setErr(null); }}
+            className={`flex-1 py-2 text-sm font-medium transition-colors ${
+              mode === "register" ? "bg-accent text-white" : "bg-transparent text-muted hover:text-white"
+            }`}
+          >
+            Register
+          </button>
+        </div>
+
+        {/* Login Form */}
+        {mode === "login" && (
+          <form onSubmit={handleLogin} className="card space-y-4">
+            <div>
+              <div className="text-sm font-medium mb-1">Email</div>
+              <input
+                className="input"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </div>
+            <div>
+              <div className="text-sm font-medium mb-1">Password</div>
+              <input
+                className="input"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
+            {err && <div className="text-sm text-danger">{err}</div>}
+            <button className="btn-primary w-full" disabled={busy}>
+              {busy ? "Signing in…" : "Sign in"}
+            </button>
+            <div className="text-xs text-muted text-center">
+              Demo: demo@recoverai.dev / recoverai123
+            </div>
+          </form>
+        )}
+
+        {/* Register Form */}
+        {mode === "register" && (
+          <form onSubmit={handleRegister} className="card space-y-4">
+            <div>
+              <div className="text-sm font-medium mb-1">Full Name</div>
+              <input
+                className="input"
+                type="text"
+                placeholder="Your name"
+                value={regName}
+                onChange={(e) => setRegName(e.target.value)}
+                required
+              />
+            </div>
+            <div>
+              <div className="text-sm font-medium mb-1">Business / Merchant Name</div>
+              <input
+                className="input"
+                type="text"
+                placeholder="e.g. My Store"
+                value={regMerchant}
+                onChange={(e) => setRegMerchant(e.target.value)}
+              />
+            </div>
+            <div>
+              <div className="text-sm font-medium mb-1">Email</div>
+              <input
+                className="input"
+                type="email"
+                placeholder="you@example.com"
+                value={regEmail}
+                onChange={(e) => setRegEmail(e.target.value)}
+                required
+              />
+            </div>
+            <div>
+              <div className="text-sm font-medium mb-1">Password</div>
+              <input
+                className="input"
+                type="password"
+                placeholder="Min. 8 characters"
+                value={regPassword}
+                onChange={(e) => setRegPassword(e.target.value)}
+                required
+              />
+            </div>
+            <div>
+              <div className="text-sm font-medium mb-1">Confirm Password</div>
+              <input
+                className="input"
+                type="password"
+                placeholder="Repeat password"
+                value={regConfirm}
+                onChange={(e) => setRegConfirm(e.target.value)}
+                required
+              />
+            </div>
+            {err && <div className="text-sm text-danger">{err}</div>}
+            <button className="btn-primary w-full" disabled={busy}>
+              {busy ? "Creating account…" : "Create Account"}
+            </button>
+            <div className="text-xs text-muted text-center">
+              A new merchant workspace will be created for you.
+            </div>
+          </form>
+        )}
+      </div>
+    </div>
+  );
+}

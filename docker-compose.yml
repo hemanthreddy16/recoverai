@@ -1,0 +1,121 @@
+version: '3.8'
+
+services:
+  # ---------------------------------------------------------------------------
+  # Database Service (PostgreSQL 16)
+  # ---------------------------------------------------------------------------
+  postgres:
+    image: postgres:16-alpine
+    container_name: recoverai-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-recoverai}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-recoverai_password}
+      POSTGRES_DB: ${POSTGRES_DB:-recoverai_db}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-recoverai} -d ${POSTGRES_DB:-recoverai_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    networks:
+      - recoverai-network
+
+  # ---------------------------------------------------------------------------
+  # Backend API Service (FastAPI)
+  # ---------------------------------------------------------------------------
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: recoverai-backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      ENVIRONMENT: ${ENVIRONMENT:-production}
+      PROJECT_NAME: ${PROJECT_NAME:-RECOVERAI}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-recoverai}:${POSTGRES_PASSWORD:-recoverai_password}@postgres:5432/${POSTGRES_DB:-recoverai_db}
+      SECRET_KEY: ${SECRET_KEY:-change-me-to-a-secure-random-secret-key-in-production-min-32-chars}
+      JWT_ALGORITHM: ${JWT_ALGORITHM:-HS256}
+      ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-1440}
+      MCP_AUTH_TOKEN: ${MCP_AUTH_TOKEN:-recoverai-mcp-auth-token-replace-in-prod}
+      MCP_EXTERNAL: ${MCP_EXTERNAL:-false}
+      LLM_PROVIDER: ${LLM_PROVIDER:-none}
+      LLM_API_KEY: ${LLM_API_KEY:-}
+      LLM_MODEL: ${LLM_MODEL:-gpt-4o-mini}
+      RAZORPAY_ENABLED: ${RAZORPAY_ENABLED:-false}
+      RAZORPAY_KEY_ID: ${RAZORPAY_KEY_ID:-}
+      RAZORPAY_KEY_SECRET: ${RAZORPAY_KEY_SECRET:-}
+      CORS_ORIGINS: ${CORS_ORIGINS:-*}
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    networks:
+      - recoverai-network
+
+  # ---------------------------------------------------------------------------
+  # Frontend Application Service (Next.js 14)
+  # ---------------------------------------------------------------------------
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: recoverai-frontend
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      NEXT_PUBLIC_API_URL: http://backend:8000
+    ports:
+      - "3000:3000"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/ || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    networks:
+      - recoverai-network
+
+  # ---------------------------------------------------------------------------
+  # MCP Server Service (FastMCP)
+  # ---------------------------------------------------------------------------
+  mcp-server:
+    build:
+      context: ./mcp_server
+      dockerfile: Dockerfile
+    container_name: recoverai-mcp-server
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-recoverai}:${POSTGRES_PASSWORD:-recoverai_password}@postgres:5432/${POSTGRES_DB:-recoverai_db}
+      MCP_AUTH_TOKEN: ${MCP_AUTH_TOKEN:-recoverai-mcp-auth-token-replace-in-prod}
+    ports:
+      - "8080:8080"
+    networks:
+      - recoverai-network
+
+volumes:
+  postgres_data:
+    name: recoverai_postgres_data
+
+networks:
+  recoverai-network:
+    name: recoverai_network
+    driver: bridge

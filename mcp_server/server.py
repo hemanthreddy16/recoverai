@@ -199,4 +199,4 @@ def close_recovery_case(case_id: int, status: str, merchant_id: int, token: str)
 
 
 if __name__ == "__main__":
-    mcp.run(transport="streamable-http")
+    mcp.run()

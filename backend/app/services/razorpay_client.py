@@ -117,18 +117,6 @@ class RazorpayClient:
         return hmac.compare_digest(expected, signature or "")
 
     @staticmethod
-    def generate_payment_signature(order_id: str, payment_id: str, secret: str) -> str:
-        """Generate the Razorpay Checkout signature: HMAC(order_id|payment_id)."""
-        message = f"{order_id}|{payment_id}".encode("utf-8")
-        return hmac.new(secret.encode("utf-8"), message, hashlib.sha256).hexdigest()
-
-    def verify_payment_signature(self, order_id: str, payment_id: str, signature: str) -> bool:
-        if not self.key_secret or not order_id or not payment_id or not signature:
-            return False
-        expected = self.generate_payment_signature(order_id, payment_id, self.key_secret)
-        return hmac.compare_digest(expected, signature)
-
-    @staticmethod
     def generate_webhook_signature(body: bytes, secret: str) -> str:
         """Generate HMAC-SHA256 signature for Razorpay webhook testing."""
         return hmac.new(secret.encode("utf-8"), body, hashlib.sha256).hexdigest()

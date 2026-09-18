@@ -84,25 +84,16 @@ def approve_case(
     """Human approves a case that was gated for approval."""
     if case.policy_decision != "approval":
         return case
-
-    if case.recovery_status == "recovered":
-        return case
-
     case.approved_action = case.approved_action or case.recommended_action
     db.commit()
-
     merchant_id = case.merchant_id
     llm = get_llm()
     gateway = MCPGateway(db, merchant_id, caller="orchestrator")
     ctx = AgentContext(db, merchant_id, llm, gateway)
-
     case = RecoveryAgent(ctx).execute(case)
-    case = VerificationAgent(ctx).run(
-        case,
-        simulated_outcome=simulated_outcome,
-    )
-
+    case = VerificationAgent(ctx).run(case, simulated_outcome=simulated_outcome)
     return case
+
+
 def compute_analytics(db: Session, merchant_id: int) -> dict:
-    from app.agents.analytics import AnalyticsAgent
     return AnalyticsAgent(db, merchant_id).compute()

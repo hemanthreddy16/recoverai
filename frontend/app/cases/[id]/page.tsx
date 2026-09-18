@@ -12,37 +12,6 @@ export default function CaseDetailPage({ params }: { params: { id: string } }) {
   const { data: c, loading } = useAsync<CaseDetail>(() => api.get(`/cases/${caseId}`), [caseId, approved]);
   const { data: tl } = useAsync<TimelineEvent[]>(() => api.get(`/cases/${caseId}/timeline`), [caseId, approved]);
 
-  async function startRazorpayRecovery() {
-    if (!c?.payment_id) return;
-    try {
-      const order = await api.post<{ payment_id: number; razorpay_order_id: string; amount: number; currency: string; key_id: string; name: string; description: string }>(`/payments/${c.payment_id}/razorpay/order`, {});
-      await loadRazorpayScript();
-      const Razorpay = (window as any).Razorpay;
-      if (!Razorpay) throw new Error("Razorpay Checkout could not be loaded");
-      const rzp = new Razorpay({
-        key: order.key_id,
-        amount: Math.round(order.amount * 100),
-        currency: order.currency,
-        name: order.name,
-        description: order.description,
-        order_id: order.razorpay_order_id,
-        handler: async (response: any) => {
-          try {
-            await api.post(`/payments/${c.payment_id}/razorpay/verify`, response);
-            alert("Payment successful and verified by RecoverAI.");
-            window.location.reload();
-          } catch (err: any) {
-            alert(`Payment verification failed: ${err.message || "Unknown error"}`);
-          }
-        },
-      });
-      rzp.on("payment.failed", (response: any) => alert(`Payment failed: ${response?.error?.description || "Payment failed"}`));
-      rzp.open();
-    } catch (err: any) {
-      alert(`Unable to start Razorpay Checkout: ${err.message || "Unknown error"}`);
-    }
-  }
-
   async function approve(outcome: string) {
     await api.post(`/cases/${caseId}/approve`, { simulated_outcome: outcome });
     setApproved((v) => !v);
@@ -108,65 +77,18 @@ export default function CaseDetailPage({ params }: { params: { id: string } }) {
                 <Row k="Recovered" v={fmt(c.amount_recovered)} />
               </dl>
               <p className="text-xs text-muted mt-2">{c.policy_reason}</p>
-              {c.payment_id && c.recovery_status === "open" && (
-                <div className="mt-3">
-                  <button className="btn-primary" onClick={startRazorpayRecovery}>₹ Pay with Razorpay</button>
+              {c.policy_decision === "approval" && (
+                <div className="flex gap-2 mt-3">
+                  <button className="btn-primary" onClick={() => approve("success")}>Approve & Recover</button>
+                  <button className="btn-ghost" onClick={() => approve("failure")}>Approve & Fail</button>
                 </div>
               )}
-              {c.policy_decision === "approval" && c.recovery_status !== "recovered" && (
-  <div className="flex gap-2 mt-3">
-    <button
-      className="btn-primary"
-      onClick={() => approve("success")}
-    >
-      Approve & Recover
-    </button>
-
-    <button
-      className="btn-ghost"
-      onClick={() => approve("failure")}
-    >
-      Approve & Fail
-    </button>
-  </div>
-)}
-
-{c.recovery_status === "recovered" && (
-  <div className="mt-4 rounded-xl border border-green-500/50 bg-green-500/10 px-5 py-4">
-    <div className="flex items-center gap-3">
-      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-green-400 text-black font-bold">
-        ✓
-      </div>
-
-      <div>
-        <div className="text-lg font-semibold text-green-400">
-          Recovered
-        </div>
-
-        <div className="text-sm text-green-300">
-          Recovery of ₹{Number(c.amount_recovered || 0).toLocaleString("en-IN")} completed successfully.
-        </div>
-      </div>
-    </div>
-  </div>
-)}
             </Card>
           </div>
         </div>
       )}
     </div>
   );
-}
-
-function loadRazorpayScript(): Promise<void> {
-  return new Promise((resolve, reject) => {
-    if ((window as any).Razorpay) return resolve();
-    const script = document.createElement("script");
-    script.src = "https://checkout.razorpay.com/v1/checkout.js";
-    script.onload = () => resolve();
-    script.onerror = () => reject(new Error("Could not load Razorpay Checkout"));
-    document.body.appendChild(script);
-  });
 }
 
 function Row({ k, v }: { k: string; v: string }) {

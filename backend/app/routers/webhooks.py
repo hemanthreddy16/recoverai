@@ -292,18 +292,14 @@ def _handle_payment_captured(db: Session, mid: int, entity: dict, rev: RevenueEv
 
 def _handle_order_paid(db: Session, mid: int, entity: dict, rev: RevenueEvent) -> None:
     order_id = entity.get("id")
-    payment = db.query(Payment).filter_by(merchant_id=mid, razorpay_order_id=order_id).first()
-    if payment:
-        payment.status = "captured"
-        payment.captured_at = datetime.now(timezone.utc)
-        rev.customer_id = payment.customer_id
-        rev.payment_id = payment.id
-        order = db.query(Order).filter_by(merchant_id=mid, id=payment.order_id).first() if payment.order_id else None
-        if order:
-            order.status = "paid"
+    # Update matching order if present
+    order = db.query(Order).filter_by(merchant_id=mid, id=order_id).first() if isinstance(order_id, int) else None
+    if order:
+        order.status = "paid"
+        rev.customer_id = order.customer_id
         db.commit()
 
-        case = db.query(RecoveryCase).filter_by(merchant_id=mid, payment_id=payment.id, recovery_status="open").first()
+        case = db.query(RecoveryCase).filter_by(merchant_id=mid, order_id=order.id, recovery_status="open").first()
         if case:
             gateway = MCPGateway(db, mid, caller="webhook")
             ctx = AgentContext(db, mid, get_llm(), gateway)

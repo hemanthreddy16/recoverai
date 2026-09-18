@@ -253,26 +253,6 @@ class PaymentCreate(BaseModel):
     payment_method: str | None = "card"
 
 
-class RazorpayOrderCreate(BaseModel):
-    notes: dict[str, str] = {}
-
-
-class RazorpayOrderOut(BaseModel):
-    payment_id: int
-    razorpay_order_id: str
-    amount: float
-    currency: str
-    key_id: str
-    name: str
-    description: str
-
-
-class RazorpayVerifyRequest(BaseModel):
-    razorpay_order_id: str
-    razorpay_payment_id: str
-    razorpay_signature: str
-
-
 class PaymentOut(BaseModel):
     id: int
     merchant_id: int

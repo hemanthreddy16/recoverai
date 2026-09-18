@@ -4,7 +4,6 @@ from __future__ import annotations
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
 from app.config import settings
@@ -79,33 +78,6 @@ def login(body: LoginRequest, db: Session = Depends(get_db)) -> TokenResponse:
         raise HTTPException(status_code=403, detail="Account disabled")
     token = create_access_token(str(user.id), user.merchant_id, user.role)
     return TokenResponse(access_token=token, user=UserOut.model_validate(user))
-@router.post("/token")
-def token(
-    form_data: OAuth2PasswordRequestForm = Depends(),
-    db: Session = Depends(get_db),
-):
-    user = db.query(User).filter_by(email=form_data.username).first()
-
-    if not user or not verify_password(form_data.password, user.hashed_password):
-        raise HTTPException(
-            status_code=401,
-            detail="Invalid credentials",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-
-    if not user.is_active:
-        raise HTTPException(status_code=403, detail="Account disabled")
-
-    access_token = create_access_token(
-        str(user.id),
-        user.merchant_id,
-        user.role,
-    )
-
-    return {
-        "access_token": access_token,
-        "token_type": "bearer",
-    }
 
 
 @router.get("/me", response_model=UserOut)

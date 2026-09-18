@@ -17,9 +17,29 @@ export function clearToken() {
   window.localStorage.removeItem(TOKEN_KEY);
 }
 
+export function sanitizeApiUrl(url: string | null | undefined): string {
+  if (!url) return "";
+  let clean = url.trim().replace(/\/+$/, "");
+  // Ignore placeholder text like <your-backend-service-name>
+  if (clean.includes("<") || clean.includes(">") || clean.includes("your-backend-service-name")) {
+    return "";
+  }
+  if (!clean.startsWith("http://") && !clean.startsWith("https://")) {
+    clean = clean.includes("localhost") || clean.includes("127.0.0.1") ? `http://${clean}` : `https://${clean}`;
+  }
+  try {
+    const parsed = new URL(clean);
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return "";
+    return clean;
+  } catch {
+    return "";
+  }
+}
+
 export function getCustomBackendUrl(): string | null {
   if (typeof window === "undefined") return null;
-  return window.localStorage.getItem(BACKEND_OVERRIDE_KEY);
+  const custom = window.localStorage.getItem(BACKEND_OVERRIDE_KEY);
+  return sanitizeApiUrl(custom) || null;
 }
 
 export function setCustomBackendUrl(url: string | null) {
@@ -27,33 +47,29 @@ export function setCustomBackendUrl(url: string | null) {
   if (!url || !url.trim()) {
     window.localStorage.removeItem(BACKEND_OVERRIDE_KEY);
   } else {
-    let clean = url.trim().replace(/\/+$/, "");
-    if (!clean.startsWith("http://") && !clean.startsWith("https://")) {
-      clean = clean.includes("localhost") || clean.includes("127.0.0.1") ? `http://${clean}` : `https://${clean}`;
+    const clean = sanitizeApiUrl(url);
+    if (clean) {
+      window.localStorage.setItem(BACKEND_OVERRIDE_KEY, clean);
+    } else {
+      window.localStorage.removeItem(BACKEND_OVERRIDE_KEY);
     }
-    window.localStorage.setItem(BACKEND_OVERRIDE_KEY, clean);
   }
 }
 
 export function getEffectiveApiBase(): string {
   if (typeof window !== "undefined") {
     const custom = window.localStorage.getItem(BACKEND_OVERRIDE_KEY);
-    if (custom && custom.trim()) {
-      let clean = custom.trim().replace(/\/+$/, "");
-      if (!clean.startsWith("http://") && !clean.startsWith("https://")) {
-        clean = clean.includes("localhost") || clean.includes("127.0.0.1") ? `http://${clean}` : `https://${clean}`;
-      }
-      return clean;
+    if (custom) {
+      const sanitized = sanitizeApiUrl(custom);
+      if (sanitized) return sanitized;
+      window.localStorage.removeItem(BACKEND_OVERRIDE_KEY);
     }
   }
 
   const envUrl = process.env.NEXT_PUBLIC_API_URL;
   if (envUrl && typeof envUrl === "string" && envUrl.trim()) {
-    let clean = envUrl.trim().replace(/\/+$/, "");
-    if (!clean.startsWith("http://") && !clean.startsWith("https://")) {
-      clean = clean.includes("localhost") || clean.includes("127.0.0.1") ? `http://${clean}` : `https://${clean}`;
-    }
-    return clean;
+    const sanitized = sanitizeApiUrl(envUrl);
+    if (sanitized) return sanitized;
   }
 
   return "";

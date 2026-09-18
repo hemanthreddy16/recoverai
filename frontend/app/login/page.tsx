@@ -282,33 +282,52 @@ export default function LoginPage() {
           </button>
 
           {showConfig && (
-            <div className="mt-3 p-3 rounded-lg bg-panel border border-border space-y-3 text-xs">
+            <div className="mt-3 p-3.5 rounded-lg bg-panel border border-border space-y-3 text-xs">
               <div>
-                <div className="text-muted text-[11px] mb-1">Current Active Backend:</div>
-                <div className="font-mono text-accent2 bg-panel2 px-2 py-1 rounded break-all">
+                <div className="text-muted text-[11px] mb-1">Active Backend URL:</div>
+                <div className="font-mono text-accent2 bg-panel2 px-2.5 py-1.5 rounded break-all text-[11px]">
                   {effectiveApi}
                 </div>
               </div>
 
               <form onSubmit={handleSaveBackendUrl} className="space-y-2">
-                <div className="text-muted text-[11px]">Override Backend URL (Optional):</div>
+                <div className="text-muted text-[11px]">
+                  Backend Service URL:
+                </div>
                 <input
                   type="text"
                   placeholder="https://recoverai-backend.onrender.com"
                   value={customUrl}
-                  onChange={(e) => setCustomUrl(e.target.value)}
-                  className="input text-xs py-1 px-2 font-mono"
+                  onChange={(e) => {
+                    setCustomUrl(e.target.value);
+                    setHealthStatus(null);
+                  }}
+                  className={`input text-xs py-1.5 px-2 font-mono ${
+                    customUrl.includes("<") || customUrl.includes(">") ? "border-danger text-danger" : ""
+                  }`}
                 />
-                <div className="flex gap-2">
-                  <button type="submit" className="btn-primary text-xs py-1 px-2.5 flex-1">
+
+                {/* Immediate warning if placeholder brackets were typed */}
+                {(customUrl.includes("<") || customUrl.includes(">") || customUrl.includes("your-backend-service-name")) && (
+                  <div className="p-2 rounded bg-danger/10 border border-danger/30 text-danger text-[11px] leading-relaxed">
+                    ⚠️ <strong>Remove brackets:</strong> Replace <code>&lt;your-backend-service-name&gt;</code> with your actual Render service name (e.g. <code>https://recoverai-backend.onrender.com</code>).
+                  </div>
+                )}
+
+                <div className="flex gap-2 pt-1">
+                  <button
+                    type="submit"
+                    disabled={customUrl.includes("<") || customUrl.includes(">")}
+                    className="btn-primary text-xs py-1 px-3 flex-1"
+                  >
                     Apply URL
                   </button>
                   <button
                     type="button"
                     onClick={handleResetBackendUrl}
-                    className="btn-ghost text-xs py-1 px-2 text-muted hover:text-white"
+                    className="btn-ghost text-xs py-1 px-2.5 text-muted hover:text-white"
                   >
-                    Reset
+                    Reset to Default
                   </button>
                 </div>
               </form>
@@ -317,7 +336,7 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={() => checkBackend(customUrl)}
-                  disabled={checkingHealth}
+                  disabled={checkingHealth || customUrl.includes("<") || customUrl.includes(">")}
                   className="btn-ghost text-xs py-1 px-2 flex items-center gap-1.5"
                 >
                   <RefreshCw className={`h-3 w-3 ${checkingHealth ? "animate-spin" : ""}`} />
@@ -332,7 +351,7 @@ export default function LoginPage() {
               </div>
 
               {healthStatus && (
-                <div className="text-[10px] text-muted font-mono break-all bg-panel2 p-1.5 rounded">
+                <div className="text-[10px] text-muted font-mono break-all bg-panel2 p-2 rounded">
                   {healthStatus}
                 </div>
               )}

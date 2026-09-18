@@ -3,11 +3,11 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, Field
 
 
 class RegisterRequest(BaseModel):
-    email: EmailStr
+    email: str
     password: str = Field(min_length=8, max_length=128)
     full_name: str = Field(default="", max_length=200)
     merchant_name: str = Field(default="Demo Merchant", max_length=200)
@@ -16,20 +16,20 @@ class RegisterRequest(BaseModel):
 
 
 class LoginRequest(BaseModel):
-    email: EmailStr
+    email: str
     password: str
 
 
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
-    user: "UserOut"
+    user: UserOut
 
 
 class UserOut(BaseModel):
     id: int
     merchant_id: int
-    email: EmailStr
+    email: str
     full_name: str
     role: str
     is_active: bool
@@ -41,5 +41,3 @@ class UserOut(BaseModel):
 class RoleUpdateRequest(BaseModel):
     role: str = Field(pattern="^(admin|operator|viewer)$")
 
-
-TokenResponse.model_rebuild()

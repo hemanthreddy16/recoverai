@@ -94,8 +94,26 @@ for r in (
 def _startup() -> None:
     logger.info("RECOVERAI backend starting up (env=%s)", settings.ENVIRONMENT)
     try:
+        from app.database import create_all, SessionLocal
+        create_all()
+        logger.info("Database tables initialized successfully.")
+        
+        # Auto-seed if database is freshly created
+        from app.models.users import User
+        db = SessionLocal()
+        try:
+            if db.query(User).count() == 0:
+                logger.info("Fresh database detected; running initial seed...")
+                from app.seed import seed
+                seed(db)
+        finally:
+            db.close()
+    except Exception as e:
+        logger.warning("Database init/seed error: %s", e)
+
+    try:
         ensure_model()
-        logger.info("ML model ready: %s", "loaded" if True else "trained")
+        logger.info("ML model ready: %s", "loaded" if model_store.is_loaded() else "trained")
     except Exception as e:  # pragma: no cover
         logger.warning("Model load deferred: %s", e)
 

@@ -19,7 +19,10 @@ if config.config_file_name is not None:
 
 # Set database URL dynamically from app settings if not overridden
 if not config.get_main_option("sqlalchemy.url") or config.get_main_option("sqlalchemy.url") == "driver://user:pass@localhost/dbname":
-    config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
+    url = settings.DATABASE_URL
+    if url.startswith("postgres://"):
+        url = url.replace("postgres://", "postgresql://", 1)
+    config.set_main_option("sqlalchemy.url", url)
 
 target_metadata = Base.metadata
 

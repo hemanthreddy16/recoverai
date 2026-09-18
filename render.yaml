@@ -1,4 +1,4 @@
-﻿services:
+services:
   # 1. FastAPI Backend Service
   - type: web
     name: recoverai-backend
@@ -28,6 +28,11 @@
     envVars:
       - key: NODE_VERSION
         value: 20
+      - key: API_URL
+        fromService:
+          type: web
+          name: recoverai-backend
+          property: host
       - key: NEXT_PUBLIC_API_URL
         fromService:
           type: web

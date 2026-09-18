@@ -1,22 +1,71 @@
-// Lightweight API client. Token is kept in localStorage (never committed).
+// Lightweight API client. Token and optional backend override are kept in localStorage.
 const TOKEN_KEY = "recoverai_token";
+const BACKEND_OVERRIDE_KEY = "recoverai_backend_url";
 
 export function getToken(): string | null {
   if (typeof window === "undefined") return null;
   return window.localStorage.getItem(TOKEN_KEY);
 }
+
 export function setToken(t: string) {
+  if (typeof window === "undefined") return;
   window.localStorage.setItem(TOKEN_KEY, t);
 }
+
 export function clearToken() {
+  if (typeof window === "undefined") return;
   window.localStorage.removeItem(TOKEN_KEY);
+}
+
+export function getCustomBackendUrl(): string | null {
+  if (typeof window === "undefined") return null;
+  return window.localStorage.getItem(BACKEND_OVERRIDE_KEY);
+}
+
+export function setCustomBackendUrl(url: string | null) {
+  if (typeof window === "undefined") return;
+  if (!url || !url.trim()) {
+    window.localStorage.removeItem(BACKEND_OVERRIDE_KEY);
+  } else {
+    let clean = url.trim().replace(/\/+$/, "");
+    if (!clean.startsWith("http://") && !clean.startsWith("https://")) {
+      clean = clean.includes("localhost") || clean.includes("127.0.0.1") ? `http://${clean}` : `https://${clean}`;
+    }
+    window.localStorage.setItem(BACKEND_OVERRIDE_KEY, clean);
+  }
+}
+
+export function getEffectiveApiBase(): string {
+  if (typeof window !== "undefined") {
+    const custom = window.localStorage.getItem(BACKEND_OVERRIDE_KEY);
+    if (custom && custom.trim()) {
+      let clean = custom.trim().replace(/\/+$/, "");
+      if (!clean.startsWith("http://") && !clean.startsWith("https://")) {
+        clean = clean.includes("localhost") || clean.includes("127.0.0.1") ? `http://${clean}` : `https://${clean}`;
+      }
+      return clean;
+    }
+  }
+
+  const envUrl = process.env.NEXT_PUBLIC_API_URL;
+  if (envUrl && typeof envUrl === "string" && envUrl.trim()) {
+    let clean = envUrl.trim().replace(/\/+$/, "");
+    if (!clean.startsWith("http://") && !clean.startsWith("https://")) {
+      clean = clean.includes("localhost") || clean.includes("127.0.0.1") ? `http://${clean}` : `https://${clean}`;
+    }
+    return clean;
+  }
+
+  return "";
 }
 
 export class ApiError extends Error {
   status: number;
-  constructor(status: number, message: string) {
+  data?: any;
+  constructor(status: number, message: string, data?: any) {
     super(message);
     this.status = status;
+    this.data = data;
   }
 }
 
@@ -27,30 +76,78 @@ async function request<T>(path: string, opts: RequestInit = {}): Promise<T> {
     ...(opts.headers as Record<string, string>),
   };
   if (token) headers["Authorization"] = `Bearer ${token}`;
-  const res = await fetch(`/api/v1${path}`, { ...opts, headers });
+
+  const base = getEffectiveApiBase();
+  const url = base ? `${base}/api/v1${path}` : `/api/v1${path}`;
+
+  let res: Response;
+  try {
+    res = await fetch(url, { ...opts, headers });
+  } catch (err: any) {
+    throw new ApiError(
+      0,
+      `Network connection failed to ${url}. Please verify your backend service is running and accessible: ${err?.message || "Connection refused"}`
+    );
+  }
 
   if (res.status === 401) {
-    if (typeof window !== "undefined") window.location.href = "/login";
-    throw new ApiError(401, "Unauthorized");
+    if (typeof window !== "undefined" && !window.location.pathname.startsWith("/login")) {
+      clearToken();
+      window.location.href = "/login";
+    }
+    const text = await res.text().catch(() => "");
+    let msg = "Invalid email or password";
+    try {
+      const data = JSON.parse(text);
+      if (data.detail) msg = data.detail;
+    } catch {}
+    throw new ApiError(401, msg);
   }
+
   if (!res.ok) {
-    const text = await res.text();
-    throw new ApiError(res.status, text || res.statusText);
+    const text = await res.text().catch(() => "");
+    let msg = text || res.statusText;
+    let parsedData: any = null;
+    try {
+      parsedData = JSON.parse(text);
+      if (parsedData.detail) {
+        msg = typeof parsedData.detail === "string" ? parsedData.detail : JSON.stringify(parsedData.detail);
+      }
+    } catch {}
+    throw new ApiError(res.status, msg, parsedData);
   }
+
   if (res.status === 204) return undefined as T;
   return (await res.json()) as T;
 }
 
 export const api = {
   get: <T>(p: string) => request<T>(p),
-  post: <T>(p: string, body?: unknown) => request<T>(p, { method: "POST", body: body ? JSON.stringify(body) : undefined }),
-  patch: <T>(p: string, body?: unknown) => request<T>(p, { method: "PATCH", body: body ? JSON.stringify(body) : undefined }),
+  post: <T>(p: string, body?: unknown) =>
+    request<T>(p, { method: "POST", body: body ? JSON.stringify(body) : undefined }),
+  patch: <T>(p: string, body?: unknown) =>
+    request<T>(p, { method: "PATCH", body: body ? JSON.stringify(body) : undefined }),
   delete: <T>(p: string) => request<T>(p, { method: "DELETE" }),
+  checkHealth: async (baseUrl?: string): Promise<{ ok: boolean; message: string; data?: any }> => {
+    const base = (baseUrl || getEffectiveApiBase() || "").replace(/\/+$/, "");
+    const target = base ? `${base}/health` : `/health`;
+    try {
+      const res = await fetch(target);
+      if (res.ok) {
+        const data = await res.json();
+        return { ok: true, message: `Connected to ${target}`, data };
+      }
+      return { ok: false, message: `Server returned HTTP ${res.status}: ${res.statusText}` };
+    } catch (e: any) {
+      return { ok: false, message: `Cannot connect to ${target}: ${e.message || "Connection refused"}` };
+    }
+  },
 };
 
 export function fmt(n: number | null | undefined, currency = "INR"): string {
   return new Intl.NumberFormat("en-IN", { style: "currency", currency, maximumFractionDigits: 0 }).format(n ?? 0);
 }
+
 export function pct(n: number | null | undefined): string {
-  return `${(((n ?? 0)) * 100).toFixed(1)}%`;
+  return `${((n ?? 0) * 100).toFixed(1)}%`;
 }

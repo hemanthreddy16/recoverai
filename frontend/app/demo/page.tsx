@@ -36,7 +36,7 @@ const SCENARIOS: {
     desc: "Single-occurrence card decline on a ₹2,400 transaction with strong customer history.",
     tag: "Auto-Recoverable",
     amount: 2400,
-    expected: "Smart Retry → Recovered",
+    expected: "Notification Sent → Awaiting Payment",
   },
   {
     key: "recoverable_payment_failure",
@@ -44,7 +44,7 @@ const SCENARIOS: {
     desc: "Temporary balance insufficiency with 88% recovery probability.",
     tag: "High Probability",
     amount: 1800,
-    expected: "Smart Retry → Recovered",
+    expected: "Payment Link Created → Awaiting Payment",
   },
   {
     key: "repeated_payment_failure",

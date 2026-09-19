@@ -283,11 +283,29 @@ def _handle_payment_captured(db: Session, mid: int, entity: dict, rev: RevenueEv
         rev.payment_id = p.id
         db.commit()
 
-        case = db.query(RecoveryCase).filter_by(merchant_id=mid, payment_id=p.id, recovery_status="open").first()
+        case = (
+            db.query(RecoveryCase)
+            .filter_by(merchant_id=mid, payment_id=p.id)
+            .filter(RecoveryCase.recovery_status.in_(["open", "awaiting_payment", "in_progress"]))
+            .first()
+        )
+        if not case and p.customer_id:
+            case = (
+                db.query(RecoveryCase)
+                .filter_by(merchant_id=mid, customer_id=p.customer_id)
+                .filter(RecoveryCase.recovery_status.in_(["open", "awaiting_payment", "in_progress"]))
+                .order_by(RecoveryCase.created_at.desc())
+                .first()
+            )
         if case:
             gateway = MCPGateway(db, mid, caller="webhook")
             ctx = AgentContext(db, mid, get_llm(), gateway)
-            VerificationAgent(ctx).run(case, simulated_outcome="success")
+            VerificationAgent(ctx).run(
+                case,
+                simulated_outcome="success",
+                verified_payment_id=rz_id,
+                verified_amount=rev.amount,
+            )
 
 
 def _handle_order_paid(db: Session, mid: int, entity: dict, rev: RevenueEvent) -> None:
@@ -299,8 +317,18 @@ def _handle_order_paid(db: Session, mid: int, entity: dict, rev: RevenueEvent) -
         rev.customer_id = order.customer_id
         db.commit()
 
-        case = db.query(RecoveryCase).filter_by(merchant_id=mid, order_id=order.id, recovery_status="open").first()
+        case = (
+            db.query(RecoveryCase)
+            .filter_by(merchant_id=mid, order_id=order.id)
+            .filter(RecoveryCase.recovery_status.in_(["open", "awaiting_payment", "in_progress"]))
+            .first()
+        )
         if case:
             gateway = MCPGateway(db, mid, caller="webhook")
             ctx = AgentContext(db, mid, get_llm(), gateway)
-            VerificationAgent(ctx).run(case, simulated_outcome="success")
+            VerificationAgent(ctx).run(
+                case,
+                simulated_outcome="success",
+                verified_payment_id=f"order_paid_{order.id}",
+                verified_amount=rev.amount,
+            )

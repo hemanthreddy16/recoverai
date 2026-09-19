@@ -21,9 +21,17 @@ class CaseOut(BaseModel):
     recommended_action: str | None
     approved_action: str | None
     policy_decision: str | None
+    stage: str = "failed"
     action_status: str
     recovery_status: str
     amount_recovered: float
+    retry_count: int = 0
+    max_attempts: int = 3
+    whatsapp_status: str = "not_dispatched"
+    customer_response: str = "pending"
+    payment_link_id: str | None = None
+    payment_link_url: str | None = None
+    verified_payment_id: str | None = None
     created_at: datetime | None
 
     model_config = {"from_attributes": True}
@@ -210,8 +218,20 @@ class DemoResult(BaseModel):
     recommended_action: str | None
     policy_decision: str | None
     approved_action: str | None
+    stage: str = "failed"
+    whatsapp_status: str = "not_dispatched"
+    customer_response: str = "pending"
+    payment_link_url: str | None = None
+    verified_payment_id: str | None = None
     recovery_status: str
     amount_recovered: float
+
+
+class SimulateCustomerPaymentRequest(BaseModel):
+    outcome: str = "success"  # success | failure
+    amount: float | None = None
+    payment_method: str = "card"
+    razorpay_payment_id: str | None = None
 
 
 # ---------------- customers ----------------
@@ -338,4 +358,240 @@ class TrainResponse(BaseModel):
     train: dict[str, Any] = {}
     validation: dict[str, Any] = {}
     test: dict[str, Any] = {}
+
+
+# ---------------- bills & emis ----------------
+class BillReminderLogOut(BaseModel):
+    id: int
+    bill_id: int
+    stage: str = "normal"
+    channel: str = "whatsapp"
+    recipient_phone: str
+    message: str
+    status: str = "delivered"
+    delivery_status: str = "delivered"
+    customer_response: str = "pending"
+    payment_status_after: str = "pending"
+    scheduled_for: datetime | None = None
+    sent_at: datetime | None = None
+
+    model_config = {"from_attributes": True}
+
+
+
+class BillRiskHistoryOut(BaseModel):
+    id: int
+    bill_id: int
+    risk_score: int
+    risk_level: str
+    risk_reason: str | None = None
+    factors: list[str] = []
+    evaluated_at: datetime | None = None
+
+    model_config = {"from_attributes": True}
+
+    @field_validator("factors", mode="before")
+    @classmethod
+    def _parse_factors(cls, v: Any) -> list[str]:
+        if isinstance(v, str):
+            try:
+                parsed = json.loads(v)
+                if isinstance(parsed, list):
+                    return [str(x) for x in parsed]
+            except Exception:
+                return [v] if v else []
+        if isinstance(v, list):
+            return [str(x) for x in v]
+        return []
+
+
+class BillEmiCreate(BaseModel):
+    name: str
+    category: str
+    amount: float
+    currency: str = "INR"
+    due_date: datetime
+    recurrence: str = "Monthly"
+    customer_name: str
+    customer_phone: str
+    customer_email: str | None = None
+    payment_link: str | None = None
+    notes: str | None = None
+    status: str | None = None  # if None, calculated from due_date
+    risk_level: str | None = None  # if None, calculated by AI engine
+
+
+class BillEmiUpdate(BaseModel):
+    name: str | None = None
+    category: str | None = None
+    amount: float | None = None
+    currency: str | None = None
+    due_date: datetime | None = None
+    recurrence: str | None = None
+    customer_name: str | None = None
+    customer_phone: str | None = None
+    customer_email: str | None = None
+    payment_link: str | None = None
+    notes: str | None = None
+    status: str | None = None
+    risk_level: str | None = None
+    risk_score: int | None = None
+    risk_reason: str | None = None
+
+
+class BillEmiOut(BaseModel):
+    id: int
+    merchant_id: int
+    customer_id: int | None = None
+    name: str
+    category: str
+    amount: float
+    currency: str
+    due_date: datetime
+    recurrence: str
+    customer_name: str
+    customer_phone: str
+    customer_email: str | None = None
+    payment_link: str | None = None
+    notes: str | None = None
+    status: str
+    risk_score: int
+    risk_level: str
+    risk_reason: str | None = None
+    risk_factors: list[str] = []
+    days_remaining: int
+    days_overdue: int
+    last_evaluated_at: datetime | None = None
+    paid_at: datetime | None = None
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
+    reminder_logs: list[BillReminderLogOut] = []
+    risk_history: list[BillRiskHistoryOut] = []
+
+    model_config = {"from_attributes": True}
+
+    @field_validator("risk_factors", mode="before")
+    @classmethod
+    def _parse_factors(cls, v: Any) -> list[str]:
+        if isinstance(v, str):
+            try:
+                parsed = json.loads(v)
+                if isinstance(parsed, list):
+                    return [str(x) for x in parsed]
+            except Exception:
+                return [v] if v else []
+        if isinstance(v, list):
+            return [str(x) for x in v]
+        return []
+
+
+class RiskSummary(BaseModel):
+    high_risk_count: int
+    high_risk_amount: float
+    medium_risk_count: int
+    medium_risk_amount: float
+    low_risk_count: int
+    low_risk_amount: float
+    total_amount_at_risk: float
+    average_risk_score: float
+    top_risk_reasons: list[dict[str, Any]] = []
+
+
+class BillEmiSummary(BaseModel):
+    total_upcoming_count: int
+    total_amount_due: float
+    due_today_count: int
+    due_today_amount: float
+    due_7_days_count: int
+    due_7_days_amount: float
+    overdue_count: int
+    overdue_amount: float
+    high_risk_count: int
+    high_risk_amount: float
+    paid_count: int
+    paid_amount: float
+    risk_summary: RiskSummary
+    upcoming_vs_overdue: dict[str, Any] = {}
+    category_breakdown: list[dict[str, Any]] = []
+    monthly_trend: list[dict[str, Any]] = []
+
+
+class SendWhatsAppRequest(BaseModel):
+    custom_message: str | None = None
+    include_payment_link: bool = True
+
+
+class ReminderSettingsOut(BaseModel):
+    id: int
+    merchant_id: int
+    reminders_enabled: bool
+    frequency: str
+    max_reminders: int
+    preferred_channel: str
+    quiet_hours_enabled: bool
+    quiet_hours_start: str
+    quiet_hours_end: str
+    risk_multiplier_enabled: bool
+    updated_at: datetime | None = None
+
+    model_config = {"from_attributes": True}
+
+
+class ReminderSettingsUpdate(BaseModel):
+    reminders_enabled: bool | None = None
+    frequency: str | None = None
+    max_reminders: int | None = None
+    preferred_channel: str | None = None
+    quiet_hours_enabled: bool | None = None
+    quiet_hours_start: str | None = None
+    quiet_hours_end: str | None = None
+    risk_multiplier_enabled: bool | None = None
+
+
+class ScheduledReminderActionOut(BaseModel):
+    bill_id: int
+    bill_name: str
+    customer_name: str
+    customer_phone: str
+    amount: float
+    due_date: str
+    stage: str
+    channel: str
+    priority: str
+    reason: str
+    scheduled_for: str
+    risk_score: int
+    risk_level: str
+
+
+class UpcomingActionsOut(BaseModel):
+    reminders_enabled: bool
+    scheduled_count: int
+    sent_count: int
+    failed_count: int
+    recovered_count: int
+    recovered_amount: float
+    next_action_time: str | None = None
+    queue: list[ScheduledReminderActionOut] = []
+
+
+class ReminderTimelineStepOut(BaseModel):
+    id: str
+    title: str
+    description: str
+    stage: str
+    timestamp: str
+    channel: str
+    status: str
+    customer_response: str | None = None
+    icon: str | None = None
+
+
+class EvaluateDispatchResultOut(BaseModel):
+    dispatched_count: int
+    dispatched_logs: list[BillReminderLogOut] = []
+    message: str
+
+
+
 

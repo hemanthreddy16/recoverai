@@ -23,12 +23,14 @@ class RecoveryAgent(BaseAgent):
 
         try:
             if action == "stop_recovery":
+                case.stage = "stopped"
                 case.action_status = "executed"
                 case.recovery_status = "stopped"
                 case.resolved_at = datetime.now(timezone.utc)
                 detail = {"note": "Recovery stopped per policy."}
             elif action == "escalate_to_human":
                 # No financial operation; flag for human.
+                case.stage = "approval_required"
                 case.action_status = "pending"
                 detail = {"note": "Escalated to human queue."}
             elif action == "retry_later":
@@ -41,22 +43,36 @@ class RecoveryAgent(BaseAgent):
                         case.customer_id, "Please retry your payment.", "email"
                     )
                     detail = r
+                case.stage = "retry_initiated"
+                case.recovery_status = "awaiting_payment"
                 case.action_status = "executed"
+                case.amount_recovered = 0.0
                 case.retry_count = (case.retry_count or 0) + 1
             elif action == "create_payment_link":
                 r = self.ctx.gateway.create_payment_link(
                     case.customer_id, float(case.amount_at_risk), case.failure_reason or "recovery"
                 )
                 detail = r
+                case.payment_link_id = r.get("payment_link_id")
+                case.payment_link_url = r.get("url")
+                case.stage = "payment_link_created"
+                case.recovery_status = "awaiting_payment"
                 case.action_status = "executed"
+                case.amount_recovered = 0.0
             elif action in ("send_recovery_notification", "subscription_recovery"):
                 msg = self._message(case)
                 r = self.ctx.gateway.send_recovery_notification(case.customer_id, msg, "email")
                 detail = r
+                case.stage = "awaiting_payment"
+                case.recovery_status = "awaiting_payment"
                 case.action_status = "executed"
+                case.amount_recovered = 0.0
             else:
                 detail = {"note": f"No-op for action {action}"}
+                case.stage = "awaiting_payment"
+                case.recovery_status = "awaiting_payment"
                 case.action_status = "executed"
+                case.amount_recovered = 0.0
 
             if case.action_status == "executed" and action not in ("escalate_to_human", "stop_recovery"):
                 self.ctx.gateway.record_recovery_action(case.id, action)

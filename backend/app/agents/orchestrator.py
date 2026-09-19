@@ -61,18 +61,20 @@ def process_case(
     decision = case.policy_decision
     if decision == "denied":
         logger.info("Case %s denied by policy", case.id)
+        case.stage = "stopped"
         case.action_status = "failed"
         case.recovery_status = "stopped"
         db.commit()
         return case
 
     if decision == "auto" or (decision == "approval" and auto_approve):
-        recovery = RecoveryAgent(ctx).execute(case)
-        # 5) Verification (skip for intentionally stopped cases).
-        if case.approved_action != "stop_recovery":
-            case = VerificationAgent(ctx).run(case, simulated_outcome=simulated_outcome)
+        if decision == "approval" and auto_approve:
+            case.approved_action = case.approved_action or case.recommended_action
+            case.stage = "customer_approved"
+        case = RecoveryAgent(ctx).execute(case)
     else:
         # Awaiting human approval.
+        case.stage = "approval_required"
         logger.info("Case %s pending human approval", case.id)
         db.commit()
     return case
@@ -85,13 +87,13 @@ def approve_case(
     if case.policy_decision != "approval":
         return case
     case.approved_action = case.approved_action or case.recommended_action
+    case.stage = "customer_approved"
     db.commit()
     merchant_id = case.merchant_id
     llm = get_llm()
     gateway = MCPGateway(db, merchant_id, caller="orchestrator")
     ctx = AgentContext(db, merchant_id, llm, gateway)
     case = RecoveryAgent(ctx).execute(case)
-    case = VerificationAgent(ctx).run(case, simulated_outcome=simulated_outcome)
     return case
 
 

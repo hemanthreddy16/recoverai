@@ -63,27 +63,36 @@ export function PageHeader({
 
 export function Card({
   title,
+  subtitle,
   children,
   className = "",
   headerRight,
+  action,
 }: {
   title?: ReactNode;
+  subtitle?: ReactNode;
   children: ReactNode;
   className?: string;
   headerRight?: ReactNode;
+  action?: ReactNode;
 }) {
+  const right = headerRight || action;
   return (
     <div className={`card ${className}`}>
-      {(title || headerRight) && (
-        <div className="flex items-center justify-between text-sm font-semibold text-white/90 mb-3.5 pb-2 border-b border-border/50">
-          <div>{title}</div>
-          {headerRight && <div>{headerRight}</div>}
+      {(title || subtitle || right) && (
+        <div className="flex items-start sm:items-center justify-between gap-2 text-sm font-semibold text-white/90 mb-3.5 pb-2 border-b border-border/50">
+          <div>
+            {title && <div>{title}</div>}
+            {subtitle && <p className="text-xs text-muted font-normal mt-0.5">{subtitle}</p>}
+          </div>
+          {right && <div>{right}</div>}
         </div>
       )}
       {children}
     </div>
   );
 }
+
 
 export function Kpi({
   label,

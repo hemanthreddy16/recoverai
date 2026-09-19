@@ -20,8 +20,9 @@ from app.services.llm import get_llm
 from app.mcp.gateway import MCPGateway
 from app.agents.base import AgentContext
 from app.agents.orchestrator import approve_case
+from app.agents.verification import VerificationAgent
 
-from app.schemas.api import ApproveRequest, CaseCreate, CaseDetail, CaseOut
+from app.schemas.api import ApproveRequest, CaseCreate, CaseDetail, CaseOut, SimulateCustomerPaymentRequest
 
 router = APIRouter(prefix="/cases", tags=["cases"])
 
@@ -80,6 +81,44 @@ def approve(
     db.commit()
 
     case = approve_case(db, case, simulated_outcome=body.simulated_outcome)
+    detail = CaseDetail.model_validate(case)
+    detail.contributing_factors = case.get_contributing_factors()
+    return detail
+
+
+@router.post("/{case_id}/simulate-customer-payment", response_model=CaseDetail)
+def simulate_customer_payment(
+    case_id: int,
+    body: SimulateCustomerPaymentRequest,
+    db: Session = Depends(get_db),
+    user: AuthUser = Depends(get_current_user),
+) -> CaseDetail:
+    case = db.query(RecoveryCase).filter_by(id=case_id, merchant_id=user.merchant_id).first()
+    if not case:
+        raise HTTPException(status_code=404, detail="Case not found")
+
+    # Record Customer Payment Event in Audit Log
+    db.add(
+        AuditLog(
+            merchant_id=user.merchant_id,
+            actor="customer",
+            action="payment.attempted" if body.outcome == "success" else "payment.failed",
+            entity_type="recovery_case",
+            entity_id=case.id,
+            detail=json.dumps({"outcome": body.outcome, "amount": body.amount or case.amount_at_risk, "method": body.payment_method}),
+        )
+    )
+    db.commit()
+
+    gateway = MCPGateway(db, user.merchant_id, caller="simulate_payment")
+    ctx = AgentContext(db, user.merchant_id, get_llm(), gateway)
+    case = VerificationAgent(ctx).run(
+        case,
+        simulated_outcome=body.outcome,
+        verified_payment_id=body.razorpay_payment_id,
+        verified_amount=body.amount,
+    )
+
     detail = CaseDetail.model_validate(case)
     detail.contributing_factors = case.get_contributing_factors()
     return detail

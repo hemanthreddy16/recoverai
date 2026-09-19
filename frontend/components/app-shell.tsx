@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
   FolderKanban,
+  Receipt,
   Bot,
   Sparkles,
   LineChart,
@@ -22,6 +23,7 @@ import { getToken, clearToken } from "@/lib/api";
 const NAV = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/cases", label: "Cases", icon: FolderKanban },
+  { href: "/bills", label: "Bills & EMIs", icon: Receipt, badge: "NEW" },
   { href: "/agents", label: "Agents", icon: Bot },
   { href: "/command", label: "AI Command Center", icon: Sparkles, badge: "AI" },
   { href: "/analytics", label: "Analytics", icon: LineChart },

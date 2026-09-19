@@ -1,6 +1,7 @@
 """Expose all ORM models from a single import point."""
 from __future__ import annotations
 
+from app.models.bills import BillEmi, BillReminderLog, BillReminderSettings, BillRiskHistory
 from app.models.payments import Order, Payment, RevenueEvent, Subscription
 from app.models.recovery import (
     AgentDecision,
@@ -32,4 +33,9 @@ __all__ = [
     "AuditLog",
     "ModelPrediction",
     "MerchantPolicy",
+    "BillEmi",
+    "BillReminderLog",
+    "BillRiskHistory",
+    "BillReminderSettings",
 ]
+

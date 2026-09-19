@@ -138,7 +138,7 @@ def test_full_e2e_recovery_workflow(client: TestClient, auth_headers: dict):
     assert "diagnosis" in agents_in_timeline
 
     # -------------------------------------------------------------
-    # 6. Execute Recovery / Approval & Verification
+    # 6. Execute Recovery Action Approval & Payment Verification
     # -------------------------------------------------------------
     approve_resp = client.post(
         f"/api/v1/cases/{case_id}/approve",
@@ -146,7 +146,18 @@ def test_full_e2e_recovery_workflow(client: TestClient, auth_headers: dict):
         headers=auth_headers,
     )
     assert approve_resp.status_code == 200
-    updated_case = approve_resp.json()
+    approved_case = approve_resp.json()
+    assert approved_case["recovery_status"] in ("awaiting_payment", "open", "in_progress")
+    assert approved_case["amount_recovered"] == 0.0
+
+    # Simulate Customer Completing Payment
+    pay_resp = client.post(
+        f"/api/v1/cases/{case_id}/simulate-customer-payment",
+        json={"outcome": "success", "amount": fail_amount},
+        headers=auth_headers,
+    )
+    assert pay_resp.status_code == 200
+    updated_case = pay_resp.json()
     assert updated_case["recovery_status"] == "recovered"
     assert updated_case["amount_recovered"] == fail_amount
 

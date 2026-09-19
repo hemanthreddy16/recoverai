@@ -71,13 +71,22 @@ class RecoveryCase(Base):
     retry_count: Mapped[int] = mapped_column(Integer, default=0)
     max_attempts: Mapped[int] = mapped_column(Integer, default=3)
 
-    # Lifecycle.
+    # Lifecycle & State Machine.
+    # stage: failed|diagnosed|recovery_recommended|approval_required|customer_approved|payment_link_created|retry_initiated|awaiting_payment|payment_processing|payment_success|payment_verified|recovered|stopped
+    stage: Mapped[str] = mapped_column(String(50), default="failed", index=True)
     # action_status: pending|approved|executing|executed|failed
     action_status: Mapped[str] = mapped_column(String(30), default="pending", index=True)
-    # recovery_status: open|recovered|failed|stopped
+    # recovery_status: open|awaiting_payment|in_progress|recovered|failed|stopped
     recovery_status: Mapped[str] = mapped_column(String(30), default="open", index=True)
     amount_recovered: Mapped[float] = mapped_column(Float, default=0.0)
     assigned_to: Mapped[int | None] = mapped_column(Integer)
+
+    # Customer Interaction & Settlement Tracking
+    whatsapp_status: Mapped[str] = mapped_column(String(30), default="not_dispatched")  # not_dispatched|sent|delivered|read|failed
+    customer_response: Mapped[str] = mapped_column(String(30), default="pending")  # pending|opened_link|approved|rejected|paid
+    payment_link_id: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    payment_link_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    verified_payment_id: Mapped[str | None] = mapped_column(String(100), nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow)
     updated_at: Mapped[datetime] = mapped_column(

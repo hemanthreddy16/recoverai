@@ -141,9 +141,12 @@ export const api = {
   get: <T>(p: string) => request<T>(p),
   post: <T>(p: string, body?: unknown) =>
     request<T>(p, { method: "POST", body: body ? JSON.stringify(body) : undefined }),
+  put: <T>(p: string, body?: unknown) =>
+    request<T>(p, { method: "PUT", body: body ? JSON.stringify(body) : undefined }),
   patch: <T>(p: string, body?: unknown) =>
     request<T>(p, { method: "PATCH", body: body ? JSON.stringify(body) : undefined }),
   delete: <T>(p: string) => request<T>(p, { method: "DELETE" }),
+
   checkHealth: async (baseUrl?: string): Promise<{ ok: boolean; message: string; data?: any }> => {
     const base = (baseUrl || getEffectiveApiBase() || "").replace(/\/+$/, "");
     const target = base ? `${base}/health` : `/health`;

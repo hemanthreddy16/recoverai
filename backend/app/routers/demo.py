@@ -116,7 +116,7 @@ def run_scenario(body: DemoScenarioRequest, db: Session = Depends(get_db), user:
     # High-value scenarios require human approval; in the demo we simulate approval.
     auto_approve = spec["amount"] >= 50000 or spec["reason"] == "fraud_blocked"
     case = process_case(db, case, simulated_outcome=outcome, auto_approve=auto_approve)
-    logger.info("Demo scenario %s -> case %s (%s)", body.scenario, case.id, case.recovery_status)
+    logger.info("Demo scenario %s -> case %s (%s, stage=%s)", body.scenario, case.id, case.recovery_status, getattr(case, "stage", ""))
 
     return DemoResult(
         case_id=case.id,
@@ -126,6 +126,11 @@ def run_scenario(body: DemoScenarioRequest, db: Session = Depends(get_db), user:
         recommended_action=case.recommended_action,
         policy_decision=case.policy_decision,
         approved_action=case.approved_action,
+        stage=getattr(case, "stage", "failed"),
+        whatsapp_status=getattr(case, "whatsapp_status", "not_dispatched"),
+        customer_response=getattr(case, "customer_response", "pending"),
+        payment_link_url=getattr(case, "payment_link_url", None),
+        verified_payment_id=getattr(case, "verified_payment_id", None),
         recovery_status=case.recovery_status,
         amount_recovered=case.amount_recovered,
     )

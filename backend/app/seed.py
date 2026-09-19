@@ -14,7 +14,9 @@ from datetime import datetime, timedelta, timezone
 from sqlalchemy.orm import Session
 
 from app.database import Base, SessionLocal, create_all
+from app.models.bills import BillEmi, BillReminderLog, BillReminderSettings, BillRiskHistory
 from app.models.payments import Order, Payment, RevenueEvent, Subscription
+
 from app.models.users import Customer, Merchant, User
 from app.models.recovery import (
     AuditLog,
@@ -98,7 +100,293 @@ def seed(db: Session) -> None:
             db.add(c)
         db.commit()
 
-        # 5. Orders & Subscriptions
+    # 5. Seed Bills & EMIs
+    if db.query(BillEmi).filter_by(merchant_id=merchant.id).count() == 0:
+        now = datetime.now(timezone.utc)
+        custs = db.query(Customer).filter_by(merchant_id=merchant.id).all()
+        
+        sample_bills = [
+            {
+                "name": "Tata Power Commercial Electricity",
+                "category": "Electricity",
+                "amount": 18450.0,
+                "due_date": now + timedelta(days=2),
+                "recurrence": "Monthly",
+                "customer_name": "Rajesh Sharma",
+                "customer_phone": "9876543210",
+                "customer_email": "rajesh.sharma@example.com",
+                "payment_link": "https://pay.recoverai.dev/bill/elec-01",
+                "notes": "Main server room & office floor electricity connection.",
+                "status": "Upcoming",
+                "risk_level": "Medium",
+            },
+            {
+                "name": "Airtel Fiber Gigabit Leased Line",
+                "category": "Internet",
+                "amount": 6999.0,
+                "due_date": now + timedelta(hours=6),
+                "recurrence": "Monthly",
+                "customer_name": "Priya Patel",
+                "customer_phone": "9823456789",
+                "customer_email": "priya.p@example.com",
+                "payment_link": "https://pay.recoverai.dev/bill/net-01",
+                "notes": "Primary office fiber line with 99.9% uptime SLA.",
+                "status": "Due Today",
+                "risk_level": "Medium",
+            },
+            {
+                "name": "HDFC Commercial Property Loan EMI",
+                "category": "EMI",
+                "amount": 78500.0,
+                "due_date": now - timedelta(days=4),
+                "recurrence": "Monthly",
+                "customer_name": "Vikas Malhotra",
+                "customer_phone": "9811223344",
+                "customer_email": "vikas.m@example.com",
+                "payment_link": "https://pay.recoverai.dev/bill/hdfc-emi-01",
+                "notes": "EMI Installment #34 of 120. Needs immediate settlement.",
+                "status": "Overdue",
+                "risk_level": "High",
+            },
+            {
+                "name": "Jio Corporate Mobile CUG Fleet",
+                "category": "Mobile",
+                "amount": 4200.0,
+                "due_date": now + timedelta(days=5),
+                "recurrence": "Monthly",
+                "customer_name": "Amit Deshmukh",
+                "customer_phone": "9765432109",
+                "customer_email": "amit.d@example.com",
+                "payment_link": "https://pay.recoverai.dev/bill/jio-cug",
+                "notes": "Corporate post-paid plan for field sales team (14 lines).",
+                "status": "Upcoming",
+                "risk_level": "Low",
+            },
+            {
+                "name": "DLF CyberCity Office Rent (Block B)",
+                "category": "Rent",
+                "amount": 125000.0,
+                "due_date": now + timedelta(days=12),
+                "recurrence": "Monthly",
+                "customer_name": "DLF Commercial Assets Ltd",
+                "customer_phone": "9900112233",
+                "customer_email": "accounts@dlfcyber.com",
+                "payment_link": "https://pay.recoverai.dev/bill/dlf-rent",
+                "notes": "Monthly lease for HQ premises 4th floor.",
+                "status": "Upcoming",
+                "risk_level": "Low",
+            },
+            {
+                "name": "ICICI Lombard Group Health Insurance",
+                "category": "Insurance",
+                "amount": 46200.0,
+                "due_date": now - timedelta(days=8),
+                "recurrence": "Quarterly",
+                "customer_name": "Sunita Rao",
+                "customer_phone": "9833445566",
+                "customer_email": "sunita.rao@example.com",
+                "payment_link": "https://pay.recoverai.dev/bill/icici-ins",
+                "notes": "Quarterly premium for 50 employee group medical cover.",
+                "status": "Overdue",
+                "risk_level": "High",
+            },
+            {
+                "name": "AWS Cloud Infrastructure Billing",
+                "category": "Subscription",
+                "amount": 34800.0,
+                "due_date": now + timedelta(days=4),
+                "recurrence": "Monthly",
+                "customer_name": "Karan Singhal",
+                "customer_phone": "9845012345",
+                "customer_email": "karan.s@example.com",
+                "payment_link": "https://pay.recoverai.dev/bill/aws-cloud",
+                "notes": "Production Kubernetes & RDS database clusters.",
+                "status": "Upcoming",
+                "risk_level": "Medium",
+            },
+            {
+                "name": "Canon Industrial Printer Equipment EMI",
+                "category": "EMI",
+                "amount": 14500.0,
+                "due_date": now - timedelta(days=15),
+                "recurrence": "Monthly",
+                "customer_name": "Kavita Nair",
+                "customer_phone": "9877665544",
+                "customer_email": "kavita.n@example.com",
+                "payment_link": "https://pay.recoverai.dev/bill/canon-emi",
+                "notes": "Lease finance installment #18 of 36.",
+                "status": "Paid",
+                "risk_level": "Low",
+            },
+            {
+                "name": "HubSpot Marketing & CRM Suite",
+                "category": "Subscription",
+                "amount": 19500.0,
+                "due_date": now + timedelta(days=18),
+                "recurrence": "Monthly",
+                "customer_name": "Rohan Gupta",
+                "customer_phone": "9899887766",
+                "customer_email": "rohan.g@example.com",
+                "payment_link": "https://pay.recoverai.dev/bill/hubspot",
+                "notes": "Enterprise tier annual commit billed monthly.",
+                "status": "Upcoming",
+                "risk_level": "Low",
+            },
+            {
+                "name": "Water & Utility Municipal Tax",
+                "category": "Other",
+                "amount": 5400.0,
+                "due_date": now + timedelta(days=1),
+                "recurrence": "Quarterly",
+                "customer_name": "Municipal Corporation",
+                "customer_phone": "9811002299",
+                "customer_email": "utilities@mc.gov.in",
+                "payment_link": "https://pay.recoverai.dev/bill/muni-tax",
+                "notes": "Commercial zone quarterly water cess.",
+                "status": "Upcoming",
+                "risk_level": "Medium",
+            },
+        ]
+
+        for b_data in sample_bills:
+            cust = custs[random.randint(0, len(custs) - 1)] if custs else None
+            paid_time = now - timedelta(days=2) if b_data["status"] == "Paid" else None
+            b_obj = BillEmi(
+                merchant_id=merchant.id,
+                customer_id=cust.id if cust else None,
+                name=b_data["name"],
+                category=b_data["category"],
+                amount=b_data["amount"],
+                currency="INR",
+                due_date=b_data["due_date"],
+                recurrence=b_data["recurrence"],
+                customer_name=b_data["customer_name"],
+                customer_phone=b_data["customer_phone"],
+                customer_email=b_data["customer_email"],
+                payment_link=b_data["payment_link"],
+                notes=b_data["notes"],
+                status=b_data["status"],
+                paid_at=paid_time,
+            )
+            db.add(b_obj)
+            db.commit()
+            db.refresh(b_obj)
+
+            # Evaluate with AI Risk Engine
+            from app.services.bill_risk_engine import evaluate_bill
+            evaluate_bill(db, b_obj, save_history=True)
+
+            # Seed an earlier historical risk evaluation for trend demonstration
+            hist_eval = BillRiskHistory(
+                bill_id=b_obj.id,
+                merchant_id=merchant.id,
+                risk_score=max(10, b_obj.risk_score - 15),
+                risk_level="Low" if b_obj.risk_score - 15 <= 30 else "Medium",
+                risk_reason="Initial baseline risk assessment on bill creation",
+                evaluated_at=_utc(days_ago=5),
+            )
+            hist_eval.set_factors(["Standard recurring cycle baseline", "Customer account active"])
+            db.add(hist_eval)
+            db.commit()
+
+            # Seed realistic multi-stage reminder logs for demonstration
+            if b_data["status"] == "Overdue":
+                log1 = BillReminderLog(
+                    bill_id=b_obj.id,
+                    merchant_id=merchant.id,
+                    stage="3-day",
+                    channel="whatsapp",
+                    recipient_phone=b_obj.customer_phone,
+                    message=f"Hello {b_obj.customer_name}, your {b_obj.category} payment '{b_obj.name}' of ₹{b_obj.amount:,.0f} is due in 3 days. Link: {b_obj.payment_link}",
+                    status="delivered",
+                    delivery_status="delivered",
+                    customer_response="opened_link",
+                    payment_status_after="pending",
+                    sent_at=_utc(days_ago=11, hours=2),
+                )
+                log2 = BillReminderLog(
+                    bill_id=b_obj.id,
+                    merchant_id=merchant.id,
+                    stage="due_today",
+                    channel="whatsapp",
+                    recipient_phone=b_obj.customer_phone,
+                    message=f"Payment Due Today: Hi {b_obj.customer_name}, ₹{b_obj.amount:,.0f} for {b_obj.name} is due today. Pay securely: {b_obj.payment_link}",
+                    status="delivered",
+                    delivery_status="delivered",
+                    customer_response="responded",
+                    payment_status_after="pending",
+                    sent_at=_utc(days_ago=8, hours=4),
+                )
+                log3 = BillReminderLog(
+                    bill_id=b_obj.id,
+                    merchant_id=merchant.id,
+                    stage="overdue",
+                    channel="sms",
+                    recipient_phone=b_obj.customer_phone,
+                    message=f"Action Required: {b_obj.customer_name}, your {b_obj.name} payment of ₹{b_obj.amount:,.0f} is overdue. Pay immediately: {b_obj.payment_link}",
+                    status="delivered",
+                    delivery_status="delivered",
+                    customer_response="pending",
+                    payment_status_after="pending",
+                    sent_at=_utc(days_ago=3, hours=1),
+                )
+                db.add_all([log1, log2, log3])
+                db.commit()
+
+            elif b_data["status"] == "Due Today":
+                log = BillReminderLog(
+                    bill_id=b_obj.id,
+                    merchant_id=merchant.id,
+                    stage="due_today",
+                    channel="whatsapp",
+                    recipient_phone=b_obj.customer_phone,
+                    message=f"Payment Due Today: Hi {b_obj.customer_name}, your {b_obj.category} payment '{b_obj.name}' of ₹{b_obj.amount:,.0f} is due today. Pay at: {b_obj.payment_link}",
+                    status="delivered",
+                    delivery_status="delivered",
+                    customer_response="pending",
+                    payment_status_after="pending",
+                    sent_at=_utc(days_ago=0, hours=2),
+                )
+                db.add(log)
+                db.commit()
+
+            elif b_data["status"] == "Paid":
+                log = BillReminderLog(
+                    bill_id=b_obj.id,
+                    merchant_id=merchant.id,
+                    stage="1-day",
+                    channel="whatsapp",
+                    recipient_phone=b_obj.customer_phone,
+                    message=f"Important Reminder: {b_obj.customer_name}, {b_obj.name} payment of ₹{b_obj.amount:,.0f} is due tomorrow. Link: {b_obj.payment_link}",
+                    status="delivered",
+                    delivery_status="delivered",
+                    customer_response="paid",
+                    payment_status_after="settled",
+                    sent_at=_utc(days_ago=16, hours=5),
+                )
+                db.add(log)
+                db.commit()
+
+        # Seed BillReminderSettings
+        if db.query(BillReminderSettings).filter_by(merchant_id=merchant.id).count() == 0:
+            settings = BillReminderSettings(
+                merchant_id=merchant.id,
+                reminders_enabled=True,
+                frequency="smart",
+                max_reminders=4,
+                preferred_channel="whatsapp",
+                quiet_hours_enabled=True,
+                quiet_hours_start="22:00",
+                quiet_hours_end="08:00",
+                risk_multiplier_enabled=True,
+            )
+            db.add(settings)
+            db.commit()
+
+
+    # 6. Orders & Subscriptions
+    if db.query(Order).filter_by(merchant_id=merchant.id).count() == 0:
+        customers = db.query(Customer).filter_by(merchant_id=merchant.id).all()
         for idx, c in enumerate(customers[:25]):
             o = Order(
                 merchant_id=merchant.id,

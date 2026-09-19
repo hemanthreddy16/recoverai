@@ -47,10 +47,27 @@ export default function CaseDetailPage({ params }: { params: { id: string } }) {
     setActionInProgress(true);
     try {
       await api.post(`/cases/${caseId}/approve`, { simulated_outcome: outcome });
-      setOutcomeMessage(`Action approved and executed (${outcome}). Verification updated case state.`);
+      setOutcomeMessage(`Recovery action authorized and executed. Case transitioned to Awaiting Customer Payment.`);
       await Promise.all([refetchCase(), refetchTimeline()]);
     } catch (err: any) {
       setOutcomeMessage(`Action execution failed: ${err.message || "Unknown error"}`);
+    } finally {
+      setActionInProgress(false);
+    }
+  }
+
+  async function handleSimulatePayment(outcome: "success" | "failure") {
+    setActionInProgress(true);
+    try {
+      await api.post(`/cases/${caseId}/simulate-customer-payment`, { outcome });
+      setOutcomeMessage(
+        outcome === "success"
+          ? `Customer payment verified! Case transitioned to Payment Verified • RECOVERED.`
+          : `Customer payment failed. Retry attempt registered in recovery state machine.`
+      );
+      await Promise.all([refetchCase(), refetchTimeline()]);
+    } catch (err: any) {
+      setOutcomeMessage(`Payment simulation failed: ${err.message || "Unknown error"}`);
     } finally {
       setActionInProgress(false);
     }
@@ -69,6 +86,37 @@ export default function CaseDetailPage({ params }: { params: { id: string } }) {
     }
   }
 
+  // Determine stage badge label and color
+  function getStageBadge(c: CaseDetail) {
+    if (c.recovery_status === "recovered" || c.stage === "recovered" || c.stage === "payment_verified") {
+      return { label: "Payment Verified • RECOVERED", color: "ok" as const };
+    }
+    if (c.stage === "payment_processing" || c.stage === "payment_success") {
+      return { label: "Payment Received • Verifying", color: "accent" as const };
+    }
+    if (c.stage === "payment_link_created" || c.recovery_status === "awaiting_payment") {
+      return { label: "Payment Link Sent • Awaiting Payment", color: "accent" as const };
+    }
+    if (c.stage === "customer_approved") {
+      return { label: "Customer Approved • Awaiting Payment", color: "accent" as const };
+    }
+    if (c.stage === "retry_initiated") {
+      return { label: "Retry Scheduled • Awaiting Payment", color: "accent" as const };
+    }
+    if (c.stage === "approval_required" || c.policy_decision === "approval") {
+      return { label: "Policy Approval Required", color: "warn" as const };
+    }
+    if (c.recovery_status === "stopped" || c.stage === "stopped") {
+      return { label: "Recovery Stopped", color: "danger" as const };
+    }
+    if (c.recovery_status === "failed" || c.stage === "payment_failed") {
+      return { label: "Payment Failed • Pending Retry", color: "danger" as const };
+    }
+    return { label: "Payment Failed • Initial Detection", color: "danger" as const };
+  }
+
+  const stageInfo = c ? getStageBadge(c) : null;
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-2">
@@ -81,8 +129,8 @@ export default function CaseDetailPage({ params }: { params: { id: string } }) {
         title={`Recovery Case #RC-${caseId}`}
         subtitle="Autonomous agent diagnosis, explainable ML reasoning, policy validation & execution trace"
         action={
-          <div className="flex items-center gap-2">
-            <StatusBadge status={c?.recovery_status} />
+          <div className="flex items-center gap-2 flex-wrap">
+            {stageInfo && <Badge color={stageInfo.color}>{stageInfo.label}</Badge>}
             <Badge color={c?.policy_decision === "auto" ? "ok" : c?.policy_decision === "approval" ? "warn" : "danger"}>
               Policy: {c?.policy_decision || "Pending"}
             </Badge>
@@ -99,7 +147,7 @@ export default function CaseDetailPage({ params }: { params: { id: string } }) {
       {c && (
         <>
           {/* Human-in-the-Loop Action Approval Banner */}
-          {c.policy_decision === "approval" && c.recovery_status === "open" && (
+          {c.policy_decision === "approval" && (c.stage === "approval_required" || c.recovery_status === "open") && c.recovery_status !== "recovered" && c.stage !== "payment_link_created" && (
             <div className="p-4 rounded-xl border border-warn/40 bg-warn/10 space-y-3">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-2.5 text-warn font-semibold">
@@ -109,9 +157,9 @@ export default function CaseDetailPage({ params }: { params: { id: string } }) {
                 <Badge color="warn">Policy Gate Held</Badge>
               </div>
               <p className="text-xs text-white/90 leading-relaxed">
-                This case exceeds automated threshold limits ({fmt(c.amount_at_risk)} at risk). The Strategy Agent recommends{" "}
-                <span className="font-mono font-bold text-white uppercase">{c.recommended_action || "smart_retry"}</span>.
-                Review AI diagnosis and authorize or reject execution below.
+                This case requires authorization ({fmt(c.amount_at_risk)} at risk). The Strategy Agent recommends{" "}
+                <span className="font-mono font-bold text-white uppercase">{c.recommended_action || "create_payment_link"}</span>.
+                Authorize to execute the recovery action and create the customer payment link.
               </p>
               <div className="flex items-center gap-2 pt-1">
                 <button
@@ -120,7 +168,7 @@ export default function CaseDetailPage({ params }: { params: { id: string } }) {
                   onClick={() => handleApproval("success")}
                 >
                   <CheckCircle2 className="h-3.5 w-3.5" />
-                  Authorize & Execute Recovery
+                  Authorize & Dispatch Recovery Action
                 </button>
                 <button
                   className="btn-ghost text-xs text-danger border-danger/30 hover:bg-danger/10 flex items-center gap-1.5"
@@ -129,6 +177,42 @@ export default function CaseDetailPage({ params }: { params: { id: string } }) {
                 >
                   <XCircle className="h-3.5 w-3.5" />
                   Deny Action
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Interactive Simulation Banner (When Awaiting Payment) */}
+          {c.recovery_status !== "recovered" && c.recovery_status !== "stopped" && c.stage !== "approval_required" && (
+            <div className="p-4 rounded-xl border border-accent2/40 bg-accent2/10 space-y-3">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-2.5 text-accent2 font-semibold">
+                  <Clock className="h-5 w-5 shrink-0" />
+                  <span>Awaiting Customer Payment & Gateway Confirmation</span>
+                </div>
+                <Badge color="accent">Recovery In Flight</Badge>
+              </div>
+              <p className="text-xs text-white/90 leading-relaxed">
+                Recovery action has been executed ({c.approved_action || c.recommended_action || "payment link created"}).
+                Original payment remains <span className="font-semibold text-warn">unrecovered</span> until verified by the payment gateway.
+                Simulate customer payment completion to test the verified settlement flow.
+              </p>
+              <div className="flex items-center gap-2 pt-1">
+                <button
+                  className="btn-primary text-xs flex items-center gap-1.5"
+                  disabled={actionInProgress}
+                  onClick={() => handleSimulatePayment("success")}
+                >
+                  <CheckCircle2 className="h-3.5 w-3.5" />
+                  Simulate Successful Payment (Capture ₹{c.amount_at_risk})
+                </button>
+                <button
+                  className="btn-ghost text-xs text-warn border-warn/30 hover:bg-warn/10 flex items-center gap-1.5"
+                  disabled={actionInProgress}
+                  onClick={() => handleSimulatePayment("failure")}
+                >
+                  <XCircle className="h-3.5 w-3.5" />
+                  Simulate Payment Decline
                 </button>
               </div>
             </div>
@@ -182,7 +266,7 @@ export default function CaseDetailPage({ params }: { params: { id: string } }) {
                       <li>Customer # {c.customer_id} has recorded historical transactions with positive customer lifetime value.</li>
                       <li>Current failure mode (<span className="text-accent2 font-mono">{c.failure_reason || "card_declined"}</span>) categorized as recoverable via optimized retry cadence.</li>
                       <li>ML model predicted <span className="font-bold text-ok">{pct(c.recovery_probability || 0.85)}</span> probability of successful capture.</li>
-                      <li>Proposed action <span className="font-mono font-bold text-white">{c.recommended_action || "smart_retry"}</span> complies with merchant retry policies.</li>
+                      <li>Proposed action <span className="font-mono font-bold text-white">{c.recommended_action || "create_payment_link"}</span> complies with merchant retry policies.</li>
                     </ul>
                   </div>
 
@@ -223,11 +307,16 @@ export default function CaseDetailPage({ params }: { params: { id: string } }) {
                       4. MCP Execution & Gateway Result
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="font-mono text-accent2 font-bold">{c.approved_action || c.recommended_action || "smart_retry"}</span>
+                      <span className="font-mono text-accent2 font-bold">{c.approved_action || c.recommended_action || "create_payment_link"}</span>
                       <StatusBadge status={c.action_status} />
                     </div>
                     <div className="text-[11px] text-white/80">
-                      Result: {c.recovery_status === "recovered" ? `Successfully recovered ${fmt(c.amount_recovered)} into merchant account.` : "Remediation workflow executed and state recorded."}
+                      Result:{" "}
+                      {c.recovery_status === "recovered"
+                        ? `Payment successfully recovered: ${fmt(c.amount_recovered)}.`
+                        : c.approved_action === "create_payment_link" || c.recommended_action === "create_payment_link"
+                        ? "Recovery action executed. Payment link created. Awaiting customer payment confirmation."
+                        : "Remediation action scheduled. Awaiting customer payment confirmation."}
                     </div>
                   </div>
                 </div>
@@ -271,6 +360,30 @@ export default function CaseDetailPage({ params }: { params: { id: string } }) {
                     <dt className="text-muted">Recovered Amount</dt>
                     <dd className="font-bold text-ok text-sm">{fmt(c.amount_recovered)}</dd>
                   </div>
+                  <div className="flex justify-between items-center">
+                    <dt className="text-muted">Recovery Stage</dt>
+                    <dd>{stageInfo && <Badge color={stageInfo.color}>{stageInfo.label}</Badge>}</dd>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <dt className="text-muted">WhatsApp Status</dt>
+                    <dd>
+                      <Badge color={c.whatsapp_status === "delivered" || c.whatsapp_status === "read" ? "ok" : c.whatsapp_status === "sent" ? "accent" : "muted"}>
+                        {c.whatsapp_status ? c.whatsapp_status.replace(/_/g, " ").toUpperCase() : "NOT DISPATCHED"}
+                      </Badge>
+                    </dd>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <dt className="text-muted">Customer Response</dt>
+                    <dd>
+                      <Badge color={c.customer_response === "paid" ? "ok" : c.customer_response === "opened_link" ? "accent" : "warn"}>
+                        {c.customer_response ? c.customer_response.toUpperCase() : "PENDING"}
+                      </Badge>
+                    </dd>
+                  </div>
+                  <div className="flex justify-between">
+                    <dt className="text-muted">Retry Attempts</dt>
+                    <dd className="font-mono text-white font-bold">{c.retry_count || 0} / {c.max_attempts || 3}</dd>
+                  </div>
                   <div className="flex justify-between">
                     <dt className="text-muted">Event Type</dt>
                     <dd className="text-white capitalize">{c.event_type.replace(/_/g, " ")}</dd>
@@ -282,10 +395,6 @@ export default function CaseDetailPage({ params }: { params: { id: string } }) {
                   <div className="flex justify-between">
                     <dt className="text-muted">ML Recovery Probability</dt>
                     <dd className="text-accent2 font-bold font-mono">{c.recovery_probability != null ? pct(c.recovery_probability) : "—"}</dd>
-                  </div>
-                  <div className="flex justify-between">
-                    <dt className="text-muted">ML Model Version</dt>
-                    <dd className="text-muted font-mono">{c.model_version || "gb_v2"}</dd>
                   </div>
                   <div className="flex justify-between">
                     <dt className="text-muted">Created Timestamp</dt>
@@ -328,7 +437,7 @@ export default function CaseDetailPage({ params }: { params: { id: string } }) {
                   <div>
                     <div className="text-muted text-[10px] uppercase">Recommended Action</div>
                     <div className="font-mono text-accent2 font-bold text-sm mt-0.5">
-                      {c.recommended_action || "smart_retry"}
+                      {c.recommended_action || "create_payment_link"}
                     </div>
                   </div>
                   <div>

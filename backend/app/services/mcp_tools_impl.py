@@ -340,7 +340,13 @@ class MCPTools:
                     raise MCPError(f"razorpay error: {e}")
             else:
                 url = f"https://rzp.test/{link_id}"
-            return {"payment_link_id": link_id, "url": url, "amount": amount, "customer_id": customer_id}
+            return {
+                "payment_link_id": link_id,
+                "url": url,
+                "amount": amount,
+                "customer_id": customer_id,
+                "message": "Recovery action executed. Payment link created. Awaiting customer payment confirmation.",
+            }
 
         return self._wrap("create_payment_link", None, fn, {"customer_id": customer_id, "amount": amount, "token": "***"})
 
@@ -452,7 +458,12 @@ class MCPTools:
             c.action_status = "executed" if status == "recovered" else "failed"
             c.resolved_at = _now()
             self.db.commit()
-            return {"case_id": case_id, "recovery_status": status}
+            msg = (
+                f"Payment successfully recovered: ₹{c.amount_recovered:,.0f}."
+                if status == "recovered"
+                else f"Recovery case marked as {status}."
+            )
+            return {"case_id": case_id, "recovery_status": status, "message": msg}
 
         return self._wrap("close_recovery_case", case_id, fn, {"case_id": case_id, "token": "***"})
 
@@ -471,13 +482,14 @@ class MCPTools:
             at_risk = (
                 self.db.query(func.sum(RecoveryCase.amount_at_risk))
                 .filter_by(merchant_id=self.merchant_id)
-                .filter(RecoveryCase.recovery_status.in_(["open"]))
+                .filter(RecoveryCase.recovery_status.in_(["open", "awaiting_payment", "in_progress"]))
                 .scalar()
                 or 0.0
             )
             open_cases = (
                 self.db.query(func.count(RecoveryCase.id))
-                .filter_by(merchant_id=self.merchant_id, recovery_status="open")
+                .filter_by(merchant_id=self.merchant_id)
+                .filter(RecoveryCase.recovery_status.in_(["open", "awaiting_payment", "in_progress"]))
                 .scalar()
                 or 0
             )
@@ -507,6 +519,12 @@ class MCPTools:
             "recommended_action": c.recommended_action,
             "approved_action": c.approved_action,
             "policy_decision": c.policy_decision,
+            "stage": getattr(c, "stage", "failed"),
+            "whatsapp_status": getattr(c, "whatsapp_status", "not_dispatched"),
+            "customer_response": getattr(c, "customer_response", "pending"),
+            "payment_link_id": getattr(c, "payment_link_id", None),
+            "payment_link_url": getattr(c, "payment_link_url", None),
+            "verified_payment_id": getattr(c, "verified_payment_id", None),
             "action_status": c.action_status,
             "recovery_status": c.recovery_status,
             "amount_recovered": c.amount_recovered,

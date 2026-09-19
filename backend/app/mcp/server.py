@@ -17,7 +17,7 @@ from app.database import SessionLocal
 from app.services import mcp_tools_impl
 from app.services.mcp_tools_impl import MCPError
 
-mcp = FastMCP("RECOVERAI-MCP")
+mcp = FastMCP("RESURGE-MCP")
 
 
 def _session():

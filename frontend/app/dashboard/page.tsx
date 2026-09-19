@@ -47,8 +47,8 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Autonomous Recovery Command Center"
-        subtitle="Real-time multi-agent revenue protection, ML probability prediction & MCP remediation"
+        title="Autonomous Revenue Intelligence"
+        subtitle="Real-time revenue intelligence, multi-agent recovery, ML prediction & MCP remediation"
         action={
           <div className="flex items-center gap-2.5">
             <Link href="/command" className="btn-ghost flex items-center gap-1.5 text-xs text-accent2 border-accent2/30 hover:bg-accent2/10">
@@ -122,7 +122,7 @@ export default function DashboardPage() {
             title={
               <div className="flex items-center gap-2 text-white font-semibold">
                 <Zap className="h-4 w-4 text-accent2" />
-                <span>Autonomous Recovery Pipeline Flow</span>
+                <span>Revenue Intelligence Pipeline</span>
                 <span className="text-xs text-muted font-normal">· Multi-Agent Sequential Engine</span>
               </div>
             }

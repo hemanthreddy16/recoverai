@@ -17,13 +17,13 @@ class Settings(BaseSettings):
     )
 
     # --- Core ---
-    PROJECT_NAME: str = "RECOVERAI"
+    PROJECT_NAME: str = "RESURGE"
     API_V1_PREFIX: str = "/api/v1"
     ENVIRONMENT: Literal["development", "production", "test"] = "development"
 
     # Local dev defaults to SQLite so the app runs without Docker/Postgres.
     # In docker-compose this is overridden to a Postgres URL.
-    DATABASE_URL: str = "sqlite:///./recoverai.db"
+    DATABASE_URL: str = "sqlite:///./resurge.db"
 
     # --- Security ---
     SECRET_KEY: str = "change-me-in-production-please-use-a-long-random-string"

@@ -43,7 +43,7 @@ logging.basicConfig(level=logging.INFO)
 app = FastAPI(
     title=settings.PROJECT_NAME,
     version="1.0.0",
-    description="Autonomous AI Revenue Recovery Platform",
+    description="RESURGE — Autonomous Revenue Intelligence",
 )
 
 app.add_middleware(
@@ -94,7 +94,7 @@ for r in (
 
 @app.on_event("startup")
 def _startup() -> None:
-    logger.info("RECOVERAI backend starting up (env=%s)", settings.ENVIRONMENT)
+    logger.info("RESURGE backend starting up (env=%s)", settings.ENVIRONMENT)
     try:
         from app.database import create_all, SessionLocal
         create_all()

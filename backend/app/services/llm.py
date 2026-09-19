@@ -17,7 +17,7 @@ from typing import Any
 
 from app.config import settings
 
-logger = logging.getLogger("recoverai.llm")
+logger = logging.getLogger("resurge.llm")
 
 
 class LLMService:

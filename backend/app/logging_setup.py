@@ -16,7 +16,7 @@ def configure_logging(level: int = logging.INFO) -> logging.Logger:
     # Quiet noisy libraries.
     logging.getLogger("uvicorn.access").setLevel(logging.WARNING)
     logging.getLogger("sqlalchemy.engine").setLevel(logging.WARNING)
-    return logging.getLogger("recoverai")
+    return logging.getLogger("resurge")
 
 
 logger = configure_logging()

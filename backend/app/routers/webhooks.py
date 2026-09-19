@@ -114,7 +114,7 @@ def simulate_webhook(
         order_id = body.razorpay_order_id or f"order_sim_{uuid.uuid4().hex[:10]}"
         payload = {
             "entity": "event",
-            "account_id": "acc_sim_recoverai",
+            "account_id": "acc_sim_resurge",
             "event": "order.paid",
             "contains": ["order"],
             "payload": {
@@ -148,7 +148,7 @@ def simulate_webhook(
         pay_id = body.razorpay_payment_id or f"pay_sim_{uuid.uuid4().hex[:10]}"
         payload = {
             "entity": "event",
-            "account_id": "acc_sim_recoverai",
+            "account_id": "acc_sim_resurge",
             "event": "payment.captured",
             "contains": ["payment"],
             "payload": {
@@ -183,7 +183,7 @@ def simulate_webhook(
         pay_id = body.razorpay_payment_id or f"pay_sim_{uuid.uuid4().hex[:10]}"
         payload = {
             "entity": "event",
-            "account_id": "acc_sim_recoverai",
+            "account_id": "acc_sim_resurge",
             "event": "payment.failed",
             "contains": ["payment"],
             "payload": {

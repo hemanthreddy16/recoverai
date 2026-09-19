@@ -1,7 +1,7 @@
 services:
   # 1. FastAPI Backend Service
   - type: web
-    name: recoverai-backend
+    name: resurge-backend
     runtime: python
     rootDir: backend
     buildCommand: pip install -r requirements.txt
@@ -14,13 +14,13 @@ services:
       - key: SECRET_KEY
         generateValue: true
       - key: DATABASE_URL
-        value: sqlite:///./recoverai.db
+        value: sqlite:///./resurge.db
       - key: CORS_ORIGINS
         value: "*"
 
   # 2. Next.js Frontend Service
   - type: web
-    name: recoverai-frontend
+    name: resurge-frontend
     runtime: node
     rootDir: frontend
     buildCommand: npm install && npm run build
@@ -31,10 +31,10 @@ services:
       - key: API_URL
         fromService:
           type: web
-          name: recoverai-backend
+          name: resurge-backend
           property: host
       - key: NEXT_PUBLIC_API_URL
         fromService:
           type: web
-          name: recoverai-backend
+          name: resurge-backend
           property: host

@@ -1,4 +1,4 @@
-"""RecoverAI Standalone MCP (Model Context Protocol) Server.
+"""RESURGE Standalone MCP (Model Context Protocol) Server.
 
 Provides a secured, audited tool execution boundary for AI recovery workflows.
 Tools require an authorization token and perform operations scoped strictly
@@ -16,9 +16,9 @@ from sqlalchemy import create_engine, text
 from sqlalchemy.orm import declarative_base, sessionmaker
 
 # Initialize FastMCP Server
-mcp = FastMCP("RecoverAI-MCP-Server")
+mcp = FastMCP("RESURGE-MCP-Server")
 
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./recoverai.db")
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./resurge.db")
 MCP_AUTH_TOKEN = os.getenv("MCP_AUTH_TOKEN", "dev-mcp-token-change-me")
 
 # Setup database connection
@@ -49,7 +49,7 @@ def health_check(token: str = "") -> str:
 
     return json.dumps({
         "status": "healthy" if db_ok else "degraded",
-        "service": "recoverai-mcp-server",
+        "service": "resurge-mcp-server",
         "database_connected": db_ok,
         "database_error": error_msg,
         "timestamp": _now_iso(),

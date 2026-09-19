@@ -6,24 +6,24 @@ services:
   # ---------------------------------------------------------------------------
   postgres:
     image: postgres:16-alpine
-    container_name: recoverai-postgres
+    container_name: resurge-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-recoverai}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-recoverai_password}
-      POSTGRES_DB: ${POSTGRES_DB:-recoverai_db}
+      POSTGRES_USER: ${POSTGRES_USER:-resurge}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-resurge_password}
+      POSTGRES_DB: ${POSTGRES_DB:-resurge_db}
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-recoverai} -d ${POSTGRES_DB:-recoverai_db}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-resurge} -d ${POSTGRES_DB:-resurge_db}"]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 5s
     networks:
-      - recoverai-network
+      - resurge-network
 
   # ---------------------------------------------------------------------------
   # Backend API Service (FastAPI)
@@ -32,19 +32,19 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: recoverai-backend
+    container_name: resurge-backend
     restart: unless-stopped
     depends_on:
       postgres:
         condition: service_healthy
     environment:
       ENVIRONMENT: ${ENVIRONMENT:-production}
-      PROJECT_NAME: ${PROJECT_NAME:-RECOVERAI}
-      DATABASE_URL: postgresql://${POSTGRES_USER:-recoverai}:${POSTGRES_PASSWORD:-recoverai_password}@postgres:5432/${POSTGRES_DB:-recoverai_db}
+      PROJECT_NAME: ${PROJECT_NAME:-RESURGE}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-resurge}:${POSTGRES_PASSWORD:-resurge_password}@postgres:5432/${POSTGRES_DB:-resurge_db}
       SECRET_KEY: ${SECRET_KEY:-change-me-to-a-secure-random-secret-key-in-production-min-32-chars}
       JWT_ALGORITHM: ${JWT_ALGORITHM:-HS256}
       ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-1440}
-      MCP_AUTH_TOKEN: ${MCP_AUTH_TOKEN:-recoverai-mcp-auth-token-replace-in-prod}
+      MCP_AUTH_TOKEN: ${MCP_AUTH_TOKEN:-resurge-mcp-auth-token-replace-in-prod}
       MCP_EXTERNAL: ${MCP_EXTERNAL:-false}
       LLM_PROVIDER: ${LLM_PROVIDER:-none}
       LLM_API_KEY: ${LLM_API_KEY:-}
@@ -62,7 +62,7 @@ services:
       retries: 3
       start_period: 10s
     networks:
-      - recoverai-network
+      - resurge-network
 
   # ---------------------------------------------------------------------------
   # Frontend Application Service (Next.js 14)
@@ -71,7 +71,7 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    container_name: recoverai-frontend
+    container_name: resurge-frontend
     restart: unless-stopped
     depends_on:
       backend:
@@ -89,7 +89,7 @@ services:
       retries: 3
       start_period: 15s
     networks:
-      - recoverai-network
+      - resurge-network
 
   # ---------------------------------------------------------------------------
   # MCP Server Service (FastMCP)
@@ -98,24 +98,24 @@ services:
     build:
       context: ./mcp_server
       dockerfile: Dockerfile
-    container_name: recoverai-mcp-server
+    container_name: resurge-mcp-server
     restart: unless-stopped
     depends_on:
       postgres:
         condition: service_healthy
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-recoverai}:${POSTGRES_PASSWORD:-recoverai_password}@postgres:5432/${POSTGRES_DB:-recoverai_db}
-      MCP_AUTH_TOKEN: ${MCP_AUTH_TOKEN:-recoverai-mcp-auth-token-replace-in-prod}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-resurge}:${POSTGRES_PASSWORD:-resurge_password}@postgres:5432/${POSTGRES_DB:-resurge_db}
+      MCP_AUTH_TOKEN: ${MCP_AUTH_TOKEN:-resurge-mcp-auth-token-replace-in-prod}
     ports:
       - "8080:8080"
     networks:
-      - recoverai-network
+      - resurge-network
 
 volumes:
   postgres_data:
-    name: recoverai_postgres_data
+    name: resurge_postgres_data
 
 networks:
-  recoverai-network:
-    name: recoverai_network
+  resurge-network:
+    name: resurge_network
     driver: bridge

@@ -1,4 +1,4 @@
-"""Initial schema migration for RecoverAI.
+"""Initial schema migration for RESURGE.
 
 Revision ID: 0001_initial_schema
 Revises: 

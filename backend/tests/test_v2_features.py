@@ -1,4 +1,4 @@
-"""Test suite for RecoverAI V2 Upgrade features:
+"""Test suite for RESURGE V2 Upgrade features:
 - AI Command Center queries and action triggers
 - Agent statistics & control center telemetry
 - MCP registry and sandbox tool test execution

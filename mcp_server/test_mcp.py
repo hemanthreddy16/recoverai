@@ -12,7 +12,7 @@ def test_ping():
 
 def test_health_check():
     res = json.loads(health_check())
-    assert res["service"] == "recoverai-mcp-server"
+    assert res["service"] == "resurge-mcp-server"
     assert "status" in res
     assert "database_connected" in res
 

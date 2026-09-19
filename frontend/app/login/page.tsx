@@ -135,7 +135,7 @@ export default function LoginPage() {
         {/* Logo */}
         <div className="flex items-center gap-2 justify-center mb-6">
           <ShieldCheck className="h-6 w-6 text-accent2" />
-          <span className="text-xl font-semibold tracking-tight">RECOVERAI</span>
+          <span className="text-xl font-semibold tracking-tight">RESURGE</span>
         </div>
 
         {/* Tab toggle */}
@@ -296,7 +296,7 @@ export default function LoginPage() {
                 </div>
                 <input
                   type="text"
-                  placeholder="https://recoverai-backend.onrender.com"
+                  placeholder="https://your-backend.onrender.com"
                   value={customUrl}
                   onChange={(e) => {
                     setCustomUrl(e.target.value);
@@ -310,7 +310,7 @@ export default function LoginPage() {
                 {/* Immediate warning if placeholder brackets were typed */}
                 {(customUrl.includes("<") || customUrl.includes(">") || customUrl.includes("your-backend-service-name")) && (
                   <div className="p-2 rounded bg-danger/10 border border-danger/30 text-danger text-[11px] leading-relaxed">
-                    ⚠️ <strong>Remove brackets:</strong> Replace <code>&lt;your-backend-service-name&gt;</code> with your actual Render service name (e.g. <code>https://recoverai-backend.onrender.com</code>).
+                    ⚠️ <strong>Remove brackets:</strong> Replace <code>&lt;your-backend-service-name&gt;</code> with your actual Render service name (e.g. <code>https://resurge-backend.onrender.com</code>).
                   </div>
                 )}
 

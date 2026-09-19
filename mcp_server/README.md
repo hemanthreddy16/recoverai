@@ -1,6 +1,6 @@
-# RecoverAI Model Context Protocol (MCP) Server
+# RESURGE Model Context Protocol (MCP) Server
 
-The **RecoverAI MCP Server** provides a secure, audited execution layer between intelligent agents and payment infrastructure.
+The **RESURGE MCP Server** provides a secure, audited execution layer between intelligent agents and payment infrastructure.
 
 ## Security Architecture
 

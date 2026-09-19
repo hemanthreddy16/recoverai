@@ -16,7 +16,7 @@ import httpx
 
 from app.config import settings
 
-logger = logging.getLogger("recoverai.razorpay")
+logger = logging.getLogger("resurge.razorpay")
 
 
 class RazorpayClient:
@@ -85,7 +85,7 @@ class RazorpayClient:
         payload = {
             "amount": int(round(amount * 100)),
             "currency": currency,
-            "receipt": receipt or "rcpt_recoverai",
+            "receipt": receipt or "rcpt_resurge",
         }
         with httpx.Client(timeout=15) as client:
             resp = client.post(

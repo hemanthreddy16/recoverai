@@ -42,7 +42,7 @@ from sklearn.preprocessing import OneHotEncoder
 
 from app.services.synthetic_data import generate_synthetic_dataset
 
-logger = logging.getLogger("recoverai.ml")
+logger = logging.getLogger("resurge.ml")
 
 DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data")
 CSV_PATH = os.path.join(DATA_DIR, "synthetic_transactions.csv")

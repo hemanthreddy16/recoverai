@@ -1,6 +1,8 @@
-# RecoverAI — Autonomous AI Revenue Recovery Platform
+# RESURGE — Autonomous Revenue Intelligence
 
-RecoverAI is a production-ready, multi-tenant revenue recovery platform that detects payment failures, churn risks, and checkout abandonments, predicts recovery likelihood via machine learning, and orchestrates remediation workflows through a secured Model Context Protocol (MCP) tool gateway.
+> Predict. Recover. Learn.
+
+RESURGE is a production-ready, multi-tenant revenue recovery platform that detects payment failures, churn risks, and checkout abandonments, predicts recovery likelihood via machine learning, and orchestrates remediation workflows through a secured Model Context Protocol (MCP) tool gateway.
 
 ---
 

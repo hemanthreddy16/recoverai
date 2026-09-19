@@ -394,4 +394,21 @@ export interface BillEmiInput {
   risk_reason?: string;
 }
 
+export interface DemoResult {
+  case_id: number;
+  event_type: string;
+  amount_at_risk: number;
+  recovery_probability: number | null;
+  recommended_action: string | null;
+  policy_decision: string | null;
+  approved_action: string | null;
+  stage?: string;
+  whatsapp_status?: string;
+  customer_response?: string;
+  payment_link_url?: string | null;
+  verified_payment_id?: string | null;
+  recovery_status: string;
+  amount_recovered: number;
+}
+
 

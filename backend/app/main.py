@@ -36,7 +36,7 @@ from app.routers import (
     settings as settings_router,
     webhooks,
 )
-from app.services.ml_pipeline import ensure_model
+from app.services.ml_pipeline import ensure_model, model_store
 
 logging.basicConfig(level=logging.INFO)
 

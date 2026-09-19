@@ -1,4 +1,4 @@
-"""RESURGE comprehensive test suite."""
+"""Resurge comprehensive test suite."""
 from __future__ import annotations
 
 import pytest
@@ -17,7 +17,7 @@ def client():
 def auth_headers(client: TestClient):
     resp = client.post(
         "/api/v1/auth/login",
-        json={"email": "demo@recoverai.dev", "password": "recoverai123"},
+        json={"email": "demo@resurge.dev", "password": "resurge123"},
     )
     assert resp.status_code == 200, resp.text
     token = resp.json()["access_token"]
@@ -47,7 +47,7 @@ def test_api_v1_health(client: TestClient):
 def test_auth_me(client: TestClient, auth_headers: dict):
     resp = client.get("/api/v1/auth/me", headers=auth_headers)
     assert resp.status_code == 200
-    assert resp.json()["email"] == "demo@recoverai.dev"
+    assert resp.json()["email"] == "demo@resurge.dev"
 
 
 def test_dashboard_metrics(client: TestClient, auth_headers: dict):

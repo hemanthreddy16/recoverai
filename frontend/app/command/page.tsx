@@ -40,7 +40,7 @@ export default function CommandPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       role: "assistant",
-      text: "Welcome to RESURGE Autonomous Revenue Intelligence. You can query live revenue risk metrics, inspect AI decision reasoning, analyze strategy efficacy, or execute policy-gated recovery workflows in natural language.",
+      text: "Welcome to the Resurge Autonomous Command Center. You can query live revenue risk metrics, inspect AI decision reasoning, analyze strategy efficacy, or execute policy-gated recovery workflows in natural language.",
     },
   ]);
 

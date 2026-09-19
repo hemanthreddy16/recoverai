@@ -1,8 +1,6 @@
-# RESURGE — Autonomous Revenue Intelligence
+# Resurge — Autonomous AI Revenue Recovery Platform
 
-> Predict. Recover. Learn.
-
-RESURGE is a production-ready, multi-tenant revenue recovery platform that detects payment failures, churn risks, and checkout abandonments, predicts recovery likelihood via machine learning, and orchestrates remediation workflows through a secured Model Context Protocol (MCP) tool gateway.
+Resurge is a production-ready, multi-tenant revenue recovery platform that detects payment failures, churn risks, and checkout abandonments, predicts recovery likelihood via machine learning, and orchestrates remediation workflows through a secured Model Context Protocol (MCP) tool gateway.
 
 ---
 

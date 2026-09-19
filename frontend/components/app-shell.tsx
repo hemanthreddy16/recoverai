@@ -58,7 +58,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   if (!ready) {
     return (
       <div className="flex h-screen items-center justify-center text-muted">
-        <span className="animate-pulse2">Loading RESURGE…</span>
+        <span className="animate-pulse2">Loading RESURGE Command Center…</span>
       </div>
     );
   }
@@ -82,7 +82,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   RESURGE
                   <span className="text-[9px] uppercase px-1.5 py-0.5 rounded bg-accent2/20 text-accent2 font-mono font-medium">V2</span>
                 </div>
-                <div className="text-[11px] text-muted font-medium">Autonomous Revenue Intelligence</div>
+                <div className="text-[11px] text-muted font-medium">Autonomous Revenue Ops</div>
               </div>
             </div>
           </div>

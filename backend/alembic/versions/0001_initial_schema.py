@@ -1,4 +1,4 @@
-"""Initial schema migration for RESURGE.
+"""Initial schema migration for Resurge.
 
 Revision ID: 0001_initial_schema
 Revises: 

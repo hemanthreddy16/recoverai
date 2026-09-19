@@ -1,4 +1,4 @@
-﻿"""Smart Payment Reminder Engine for RecoverAI.
+"""Smart Payment Reminder Engine for Resurge.
 
 Orchestrates multi-channel, risk-adjusted payment reminders with anti-spam protections,
 quiet-hours compliance, delivery/response lifecycle tracking, and visual timeline synthesis.
@@ -15,7 +15,7 @@ from sqlalchemy.orm import Session
 from app.models.bills import BillEmi, BillReminderLog, BillReminderSettings
 from app.services.bill_risk_engine import BillRiskEngine
 
-logger = logging.getLogger("recoverai.reminders")
+logger = logging.getLogger("resurge.reminders")
 
 
 def _utcnow() -> datetime:
@@ -43,21 +43,21 @@ class ChannelProvider:
 class WhatsAppProvider(ChannelProvider):
     @classmethod
     def send_template(cls, phone: str, bill_name: str, amount: float, due_date: str, link: str | None) -> dict[str, str]:
-        msg = f"Hello, reminder for your {bill_name} payment of ₹{amount:,.0f} due on {due_date}. Pay securely: {link or 'https://pay.recoverai.io'}"
+        msg = f"Hello, reminder for your {bill_name} payment of ₹{amount:,.0f} due on {due_date}. Pay securely: {link or 'https://pay.resurge.io'}"
         return cls.send("whatsapp", phone, msg, link)
 
 
 class EmailProvider(ChannelProvider):
     @classmethod
     def send_email(cls, email: str, bill_name: str, amount: float, due_date: str, link: str | None) -> dict[str, str]:
-        msg = f"Official Reminder: Your {bill_name} invoice of ₹{amount:,.0f} is due on {due_date}. Payment link: {link or 'https://pay.recoverai.io'}"
+        msg = f"Official Reminder: Your {bill_name} invoice of ₹{amount:,.0f} is due on {due_date}. Payment link: {link or 'https://pay.resurge.io'}"
         return cls.send("email", email, msg, link)
 
 
 class SMSProvider(ChannelProvider):
     @classmethod
     def send_sms(cls, phone: str, bill_name: str, amount: float, due_date: str, link: str | None) -> dict[str, str]:
-        msg = f"RecoverAI: ₹{amount:,.0f} due on {due_date} for {bill_name}. Pay now: {link or 'https://pay.recoverai.io'}"
+        msg = f"Resurge: ₹{amount:,.0f} due on {due_date} for {bill_name}. Pay now: {link or 'https://pay.resurge.io'}"
         return cls.send("sms", phone, msg, link)
 
 
@@ -150,19 +150,19 @@ class SmartReminderEngine:
         amt_str = f"₹{bill.amount:,.0f}"
 
         if stage == "7-day":
-            return f"Hi {bill.customer_name}, this is a gentle advance reminder that your {bill.name} payment of {amt_str} is due on {due_str}. Pay easily at {bill.payment_link or 'https://pay.recoverai.io'}."
+            return f"Hi {bill.customer_name}, this is a gentle advance reminder that your {bill.name} payment of {amt_str} is due on {due_str}. Pay easily at {bill.payment_link or 'https://pay.resurge.io'}."
         elif stage == "3-day":
-            return f"Hello {bill.customer_name}, your {bill.name} obligation of {amt_str} is due in 3 days on {due_str}. Tap here to complete payment: {bill.payment_link or 'https://pay.recoverai.io'}."
+            return f"Hello {bill.customer_name}, your {bill.name} obligation of {amt_str} is due in 3 days on {due_str}. Tap here to complete payment: {bill.payment_link or 'https://pay.resurge.io'}."
         elif stage == "1-day":
-            return f"Important Reminder: {bill.customer_name}, your {bill.name} payment of {amt_str} is due tomorrow ({due_str}). Please pay now to avoid late penalties: {bill.payment_link or 'https://pay.recoverai.io'}."
+            return f"Important Reminder: {bill.customer_name}, your {bill.name} payment of {amt_str} is due tomorrow ({due_str}). Please pay now to avoid late penalties: {bill.payment_link or 'https://pay.resurge.io'}."
         elif stage == "due_today":
-            return f"Payment Due Today: Hi {bill.customer_name}, your {bill.name} amount {amt_str} is due today. Complete your instant payment: {bill.payment_link or 'https://pay.recoverai.io'}."
+            return f"Payment Due Today: Hi {bill.customer_name}, your {bill.name} amount {amt_str} is due today. Complete your instant payment: {bill.payment_link or 'https://pay.resurge.io'}."
         elif stage == "overdue":
-            return f"Action Required: {bill.customer_name}, your {bill.name} payment of {amt_str} was due on {due_str} and is now overdue. Please clear this obligation immediately: {bill.payment_link or 'https://pay.recoverai.io'}."
+            return f"Action Required: {bill.customer_name}, your {bill.name} payment of {amt_str} was due on {due_str} and is now overdue. Please clear this obligation immediately: {bill.payment_link or 'https://pay.resurge.io'}."
         elif stage == "recovery":
-            return f"URGENT Recovery Alert: {bill.customer_name}, your {bill.name} payment of {amt_str} has failed or is severely overdue. Avoid service disruption by settling now: {bill.payment_link or 'https://pay.recoverai.io'}."
+            return f"URGENT Recovery Alert: {bill.customer_name}, your {bill.name} payment of {amt_str} has failed or is severely overdue. Avoid service disruption by settling now: {bill.payment_link or 'https://pay.resurge.io'}."
         else:
-            return f"Reminder: {bill.name} payment of {amt_str} due on {due_str}. Payment link: {bill.payment_link or 'https://pay.recoverai.io'}."
+            return f"Reminder: {bill.name} payment of {amt_str} due on {due_str}. Payment link: {bill.payment_link or 'https://pay.resurge.io'}."
 
     @classmethod
     def evaluate_bill_schedule(

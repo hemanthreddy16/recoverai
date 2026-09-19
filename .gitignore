@@ -24,7 +24,9 @@ wheels/
 .pytest_cache/
 *.joblib
 *.csv
+*.db
 resurge.db
+recoverai.db
 
 # Node / Next.js
 node_modules/

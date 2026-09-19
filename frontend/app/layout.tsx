@@ -3,8 +3,8 @@ import "./globals.css";
 import { AppShell } from "@/components/app-shell";
 
 export const metadata: Metadata = {
-  title: "RESURGE — Autonomous Revenue Intelligence",
-  description: "Predict. Recover. Learn. — Real-time revenue intelligence with multi-agent recovery, ML prediction & MCP remediation.",
+  title: "RESURGE — Autonomous AI Revenue Recovery",
+  description: "Detect, diagnose, predict and recover at-risk revenue with governed AI agents.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

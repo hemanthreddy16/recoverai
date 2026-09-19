@@ -19,8 +19,8 @@ export default function LoginPage() {
   const [mode, setMode] = useState<Mode>("login");
 
   // Login fields
-  const [email, setEmail] = useState("demo@recoverai.dev");
-  const [password, setPassword] = useState("recoverai123");
+  const [email, setEmail] = useState("demo@resurge.dev");
+  const [password, setPassword] = useState("resurge123");
 
   // Register fields
   const [regName, setRegName] = useState("");
@@ -194,7 +194,7 @@ export default function LoginPage() {
               {busy ? "Signing in…" : "Sign in"}
             </button>
             <div className="text-xs text-muted text-center">
-              Demo: demo@recoverai.dev / recoverai123
+              Demo: demo@resurge.dev / resurge123
             </div>
           </form>
         )}
@@ -296,7 +296,7 @@ export default function LoginPage() {
                 </div>
                 <input
                   type="text"
-                  placeholder="https://your-backend.onrender.com"
+                  placeholder="https://resurge-backend.onrender.com"
                   value={customUrl}
                   onChange={(e) => {
                     setCustomUrl(e.target.value);

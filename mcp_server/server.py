@@ -1,4 +1,4 @@
-"""RESURGE Standalone MCP (Model Context Protocol) Server.
+"""Resurge Standalone MCP (Model Context Protocol) Server.
 
 Provides a secured, audited tool execution boundary for AI recovery workflows.
 Tools require an authorization token and perform operations scoped strictly
@@ -16,7 +16,7 @@ from sqlalchemy import create_engine, text
 from sqlalchemy.orm import declarative_base, sessionmaker
 
 # Initialize FastMCP Server
-mcp = FastMCP("RESURGE-MCP-Server")
+mcp = FastMCP("Resurge-MCP-Server")
 
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./resurge.db")
 MCP_AUTH_TOKEN = os.getenv("MCP_AUTH_TOKEN", "dev-mcp-token-change-me")

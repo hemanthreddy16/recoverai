@@ -1,6 +1,6 @@
-# RESURGE Model Context Protocol (MCP) Server
+# Resurge Model Context Protocol (MCP) Server
 
-The **RESURGE MCP Server** provides a secure, audited execution layer between intelligent agents and payment infrastructure.
+The **Resurge MCP Server** provides a secure, audited execution layer between intelligent agents and payment infrastructure.
 
 ## Security Architecture
 

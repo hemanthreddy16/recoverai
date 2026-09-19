@@ -506,9 +506,9 @@ export default function BillsPage() {
       month: "short",
       year: "numeric",
     });
-    const link = b.payment_link || `https://pay.recoverai.dev/bill/${b.id}`;
+    const link = b.payment_link || `https://pay.resurge.dev/bill/${b.id}`;
     setCustomWaMsg(
-      `Hello ${b.customer_name}, this is a reminder from RecoverAI regarding your ${b.category} payment '${b.name}' of ${fmt(b.amount)} due on ${dueStr}. Please complete your payment securely at: ${link}`
+      `Hello ${b.customer_name}, this is a reminder from Resurge regarding your ${b.category} payment '${b.name}' of ${fmt(b.amount)} due on ${dueStr}. Please complete your payment securely at: ${link}`
     );
   }
 

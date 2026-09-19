@@ -721,13 +721,13 @@ def send_whatsapp_reminder(
         raise HTTPException(status_code=404, detail="Bill / EMI obligation not found")
 
     due_str = bill.due_date.strftime("%d %b %Y")
-    link = bill.payment_link or f"https://pay.recoverai.dev/bill/{bill.id}"
+    link = bill.payment_link or f"https://pay.resurge.dev/bill/{bill.id}"
     
     if body.custom_message and body.custom_message.strip():
         msg = body.custom_message.strip()
     else:
         msg = (
-            f"Hello {bill.customer_name}, this is a reminder from RecoverAI regarding your "
+            f"Hello {bill.customer_name}, this is a reminder from Resurge regarding your "
             f"{bill.category} obligation '{bill.name}' of ₹{bill.amount:,.0f} due on {due_str}. "
         )
         if body.include_payment_link:

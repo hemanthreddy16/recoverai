@@ -2,8 +2,8 @@
 
 Run with:  python -m app.seed
 Creates a login you can use in the UI:
-    email:    demo@recoverai.dev
-    password: recoverai123
+    email:    demo@resurge.dev
+    password: resurge123
 """
 from __future__ import annotations
 
@@ -32,8 +32,8 @@ from app.services.ml_pipeline import ensure_model, model_store
 # Deterministic seeding for reproducible demos.
 random.seed(7)
 
-DEMO_EMAIL = "demo@recoverai.dev"
-DEMO_PASSWORD = "recoverai123"
+DEMO_EMAIL = "demo@resurge.dev"
+DEMO_PASSWORD = "resurge123"
 
 
 def _utc(days_ago: int = 0, hours: int = 0) -> datetime:
@@ -115,7 +115,7 @@ def seed(db: Session) -> None:
                 "customer_name": "Rajesh Sharma",
                 "customer_phone": "9876543210",
                 "customer_email": "rajesh.sharma@example.com",
-                "payment_link": "https://pay.recoverai.dev/bill/elec-01",
+                "payment_link": "https://pay.resurge.dev/bill/elec-01",
                 "notes": "Main server room & office floor electricity connection.",
                 "status": "Upcoming",
                 "risk_level": "Medium",
@@ -129,7 +129,7 @@ def seed(db: Session) -> None:
                 "customer_name": "Priya Patel",
                 "customer_phone": "9823456789",
                 "customer_email": "priya.p@example.com",
-                "payment_link": "https://pay.recoverai.dev/bill/net-01",
+                "payment_link": "https://pay.resurge.dev/bill/net-01",
                 "notes": "Primary office fiber line with 99.9% uptime SLA.",
                 "status": "Due Today",
                 "risk_level": "Medium",
@@ -143,7 +143,7 @@ def seed(db: Session) -> None:
                 "customer_name": "Vikas Malhotra",
                 "customer_phone": "9811223344",
                 "customer_email": "vikas.m@example.com",
-                "payment_link": "https://pay.recoverai.dev/bill/hdfc-emi-01",
+                "payment_link": "https://pay.resurge.dev/bill/hdfc-emi-01",
                 "notes": "EMI Installment #34 of 120. Needs immediate settlement.",
                 "status": "Overdue",
                 "risk_level": "High",
@@ -157,7 +157,7 @@ def seed(db: Session) -> None:
                 "customer_name": "Amit Deshmukh",
                 "customer_phone": "9765432109",
                 "customer_email": "amit.d@example.com",
-                "payment_link": "https://pay.recoverai.dev/bill/jio-cug",
+                "payment_link": "https://pay.resurge.dev/bill/jio-cug",
                 "notes": "Corporate post-paid plan for field sales team (14 lines).",
                 "status": "Upcoming",
                 "risk_level": "Low",
@@ -171,7 +171,7 @@ def seed(db: Session) -> None:
                 "customer_name": "DLF Commercial Assets Ltd",
                 "customer_phone": "9900112233",
                 "customer_email": "accounts@dlfcyber.com",
-                "payment_link": "https://pay.recoverai.dev/bill/dlf-rent",
+                "payment_link": "https://pay.resurge.dev/bill/dlf-rent",
                 "notes": "Monthly lease for HQ premises 4th floor.",
                 "status": "Upcoming",
                 "risk_level": "Low",
@@ -185,7 +185,7 @@ def seed(db: Session) -> None:
                 "customer_name": "Sunita Rao",
                 "customer_phone": "9833445566",
                 "customer_email": "sunita.rao@example.com",
-                "payment_link": "https://pay.recoverai.dev/bill/icici-ins",
+                "payment_link": "https://pay.resurge.dev/bill/icici-ins",
                 "notes": "Quarterly premium for 50 employee group medical cover.",
                 "status": "Overdue",
                 "risk_level": "High",
@@ -199,7 +199,7 @@ def seed(db: Session) -> None:
                 "customer_name": "Karan Singhal",
                 "customer_phone": "9845012345",
                 "customer_email": "karan.s@example.com",
-                "payment_link": "https://pay.recoverai.dev/bill/aws-cloud",
+                "payment_link": "https://pay.resurge.dev/bill/aws-cloud",
                 "notes": "Production Kubernetes & RDS database clusters.",
                 "status": "Upcoming",
                 "risk_level": "Medium",
@@ -213,7 +213,7 @@ def seed(db: Session) -> None:
                 "customer_name": "Kavita Nair",
                 "customer_phone": "9877665544",
                 "customer_email": "kavita.n@example.com",
-                "payment_link": "https://pay.recoverai.dev/bill/canon-emi",
+                "payment_link": "https://pay.resurge.dev/bill/canon-emi",
                 "notes": "Lease finance installment #18 of 36.",
                 "status": "Paid",
                 "risk_level": "Low",
@@ -227,7 +227,7 @@ def seed(db: Session) -> None:
                 "customer_name": "Rohan Gupta",
                 "customer_phone": "9899887766",
                 "customer_email": "rohan.g@example.com",
-                "payment_link": "https://pay.recoverai.dev/bill/hubspot",
+                "payment_link": "https://pay.resurge.dev/bill/hubspot",
                 "notes": "Enterprise tier annual commit billed monthly.",
                 "status": "Upcoming",
                 "risk_level": "Low",
@@ -241,7 +241,7 @@ def seed(db: Session) -> None:
                 "customer_name": "Municipal Corporation",
                 "customer_phone": "9811002299",
                 "customer_email": "utilities@mc.gov.in",
-                "payment_link": "https://pay.recoverai.dev/bill/muni-tax",
+                "payment_link": "https://pay.resurge.dev/bill/muni-tax",
                 "notes": "Commercial zone quarterly water cess.",
                 "status": "Upcoming",
                 "risk_level": "Medium",

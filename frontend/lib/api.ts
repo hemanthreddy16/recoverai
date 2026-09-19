@@ -1,6 +1,6 @@
 // Lightweight API client. Token and optional backend override are kept in localStorage.
-const TOKEN_KEY = "recoverai_token";
-const BACKEND_OVERRIDE_KEY = "recoverai_backend_url";
+const TOKEN_KEY = "resurge_token";
+const BACKEND_OVERRIDE_KEY = "resurge_backend_url";
 
 export function getToken(): string | null {
   if (typeof window === "undefined") return null;

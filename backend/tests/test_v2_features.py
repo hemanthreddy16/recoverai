@@ -1,4 +1,4 @@
-"""Test suite for RESURGE V2 Upgrade features:
+"""Test suite for Resurge V2 Upgrade features:
 - AI Command Center queries and action triggers
 - Agent statistics & control center telemetry
 - MCP registry and sandbox tool test execution
@@ -22,7 +22,7 @@ def client():
 def auth_headers(client: TestClient):
     resp = client.post(
         "/api/v1/auth/login",
-        json={"email": "demo@recoverai.dev", "password": "recoverai123"},
+        json={"email": "demo@resurge.dev", "password": "resurge123"},
     )
     token = resp.json()["access_token"]
     return {"Authorization": f"Bearer {token}"}
